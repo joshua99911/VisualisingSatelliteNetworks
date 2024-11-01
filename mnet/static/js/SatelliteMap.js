@@ -5,6 +5,7 @@ const SatelliteMap = () => {
   const [groundUplinks, setGroundUplinks] = React.useState([]);
   const [showSatelliteLinks, setShowSatelliteLinks] = React.useState(false);
   const [showGroundLinks, setShowGroundLinks] = React.useState(false);
+  const [hoveredNode, setHoveredNode] = React.useState(null);
   
   React.useEffect(() => {
     const fetchPositions = async () => {
@@ -36,6 +37,37 @@ const SatelliteMap = () => {
     return [x, y];
   };
   
+  // Get connected nodes for a given node name
+  const getConnectedNodes = (nodeName) => {
+    const connections = new Set();
+    
+    // Check satellite links
+    satelliteLinks.forEach(link => {
+      if (link.node1_name === nodeName && link.up) {
+        connections.add(link.node2_name);
+      } else if (link.node2_name === nodeName && link.up) {
+        connections.add(link.node1_name);
+      }
+    });
+    
+    // Check ground links
+    groundUplinks.forEach(station => {
+      if (station.ground_node === nodeName) {
+        station.uplinks.forEach(uplink => {
+          connections.add(uplink.sat_node);
+        });
+      } else {
+        station.uplinks.forEach(uplink => {
+          if (uplink.sat_node === nodeName) {
+            connections.add(station.ground_node);
+          }
+        });
+      }
+    });
+    
+    return connections;
+  };
+  
   // Create links between nodes
   const renderLinks = () => {
     const links = [];
@@ -46,52 +78,76 @@ const SatelliteMap = () => {
       if (sat) return sat;
       return groundStations.find(g => g.name === name);
     };
+
+    const drawLink = (node1Name, node2Name, color, opacity, key) => {
+      const node1 = findNode(node1Name);
+      const node2 = findNode(node2Name);
+      if (node1 && node2) {
+        const [x1, y1] = getNodeCoordinates(node1);
+        const [x2, y2] = getNodeCoordinates(node2);
+        links.push(
+          React.createElement('line', {
+            key: key,
+            x1, y1, x2, y2,
+            stroke: color,
+            strokeWidth: hoveredNode ? "2" : "1",
+            strokeOpacity: opacity
+          })
+        );
+      }
+    };
     
-    if (showSatelliteLinks) {
-      satelliteLinks.forEach((link, index) => {
-        const node1 = findNode(link.node1_name);
-        const node2 = findNode(link.node2_name);
-        if (node1 && node2 && link.up) {
-          const [x1, y1] = getNodeCoordinates(node1);
-          const [x2, y2] = getNodeCoordinates(node2);
-          links.push(
-            React.createElement('line', {
-              key: `sat-link-${index}`,
-              x1, y1, x2, y2,
-              stroke: "#1d4ed8",
-              strokeWidth: "1",
-              strokeOpacity: "0.5"
-            })
-          );
-        }
+    if (hoveredNode) {
+      // When a node is hovered, only show its connections
+      const connections = getConnectedNodes(hoveredNode);
+      connections.forEach((connectedNode, index) => {
+        const isSatelliteLink = hoveredNode.startsWith('R') && connectedNode.startsWith('R');
+        drawLink(
+          hoveredNode,
+          connectedNode,
+          isSatelliteLink ? "#1d4ed8" : "#ef4444",
+          1,
+          `hover-link-${index}`
+        );
       });
-    }
-    
-    if (showGroundLinks) {
-      groundUplinks.forEach((station, stationIndex) => {
-        const groundStation = findNode(station.ground_node);
-        if (groundStation) {
+    } else {
+      // Normal link display based on toggles
+      if (showSatelliteLinks) {
+        satelliteLinks.forEach((link, index) => {
+          if (link.up) {
+            drawLink(
+              link.node1_name,
+              link.node2_name,
+              "#1d4ed8",
+              0.5,
+              `sat-link-${index}`
+            );
+          }
+        });
+      }
+      
+      if (showGroundLinks) {
+        groundUplinks.forEach((station, stationIndex) => {
           station.uplinks.forEach((uplink, uplinkIndex) => {
-            const satellite = findNode(uplink.sat_node);
-            if (satellite) {
-              const [x1, y1] = getNodeCoordinates(groundStation);
-              const [x2, y2] = getNodeCoordinates(satellite);
-              links.push(
-                React.createElement('line', {
-                  key: `ground-link-${stationIndex}-${uplinkIndex}`,
-                  x1, y1, x2, y2,
-                  stroke: "#ef4444",
-                  strokeWidth: "1",
-                  strokeOpacity: "0.5"
-                })
-              );
-            }
+            drawLink(
+              station.ground_node,
+              uplink.sat_node,
+              "#ef4444",
+              0.5,
+              `ground-link-${stationIndex}-${uplinkIndex}`
+            );
           });
-        }
-      });
+        });
+      }
     }
     
     return links;
+  };
+
+  // Handle node click to open in new tab
+  const handleNodeClick = (nodeName) => {
+    const path = nodeName.startsWith('R') ? 'router' : 'station';
+    window.open(`/view/${path}/${nodeName}`, '_blank');
   };
   
   return React.createElement(
@@ -176,21 +232,28 @@ const SatelliteMap = () => {
               
               return React.createElement(
                 'g',
-                { key: `gs-${station.name}` },
+                { 
+                  key: `gs-${station.name}`,
+                  onMouseEnter: () => setHoveredNode(station.name),
+                  onMouseLeave: () => setHoveredNode(null),
+                  onClick: () => handleNodeClick(station.name),
+                  style: { cursor: 'pointer' }
+                },
                 [
                   React.createElement('rect', {
                     x: x - 4,
                     y: y - 4,
                     width: 8,
                     height: 8,
-                    fill: "#ef4444",
+                    fill: hoveredNode === station.name ? "#dc2626" : "#ef4444",
                     transform: `rotate(45 ${x} ${y})`
                   }),
                   React.createElement('text', {
                     x: x + 6,
                     y: y + 4,
                     fontSize: "10",
-                    fill: "#ef4444"
+                    fill: "#ef4444",
+                    fontWeight: hoveredNode === station.name ? "bold" : "normal"
                   }, station.name)
                 ]
               );
@@ -202,19 +265,26 @@ const SatelliteMap = () => {
               
               return React.createElement(
                 'g',
-                { key: `sat-${sat.name}` },
+                { 
+                  key: `sat-${sat.name}`,
+                  onMouseEnter: () => setHoveredNode(sat.name),
+                  onMouseLeave: () => setHoveredNode(null),
+                  onClick: () => handleNodeClick(sat.name),
+                  style: { cursor: 'pointer' }
+                },
                 [
                   React.createElement('circle', {
                     cx: x,
                     cy: y,
-                    r: "4",
-                    fill: "#1d4ed8"
+                    r: hoveredNode === sat.name ? "5" : "4",
+                    fill: hoveredNode === sat.name ? "#1e40af" : "#1d4ed8"
                   }),
                   React.createElement('text', {
                     x: x + 6,
                     y: y + 4,
                     fontSize: "10",
-                    fill: "#1d4ed8"
+                    fill: "#1d4ed8",
+                    fontWeight: hoveredNode === sat.name ? "bold" : "normal"
                   }, sat.name)
                 ]
               );
