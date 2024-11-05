@@ -139,6 +139,7 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
     print(f"\n****Running {num_rings} rings with {num_routers} per ring, stable monitors {stable_monitors}, "
           f"ground_stations {ground_stations}, monitoring {'enabled' if enable_monitoring else 'disabled'}")
     
+
     if use_cli and net is not None:
         CLI(net)
     else:

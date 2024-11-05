@@ -1,4 +1,17 @@
 const SatelliteMap = () => {
+  // Constants
+  const mapWidth = 800;
+  const mapHeight = 400;
+  const originalImageWidth = 5400;
+  const originalImageHeight = 2700;
+  
+  // Calculate max scale based on image dimensions
+  const scaleX = originalImageWidth / mapWidth;
+  const scaleY = originalImageHeight / mapHeight;
+  const MAX_SCALE = Math.max(scaleX, scaleY);
+  const MIN_SCALE = 1;
+
+  // State
   const [satellites, setSatellites] = React.useState([]);
   const [groundStations, setGroundStations] = React.useState([]);
   const [satelliteLinks, setSatelliteLinks] = React.useState([]);
@@ -6,6 +19,11 @@ const SatelliteMap = () => {
   const [showSatelliteLinks, setShowSatelliteLinks] = React.useState(false);
   const [showGroundLinks, setShowGroundLinks] = React.useState(false);
   const [hoveredNode, setHoveredNode] = React.useState(null);
+  
+  // Pan and zoom state
+  const [transform, setTransform] = React.useState({ x: 0, y: 0, scale: 1 });
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
   
   React.useEffect(() => {
     const fetchPositions = async () => {
@@ -21,27 +39,99 @@ const SatelliteMap = () => {
       }
     };
 
-    // Fetch initially and then every 10 seconds
     fetchPositions();
     const interval = setInterval(fetchPositions, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  const mapWidth = 800;
-  const mapHeight = 400;
-  
-  // Function to get coordinates for a node
+  // Helper function to clamp value between min and max
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+  const handleWheel = (e) => {
+    e.preventDefault();  // Prevent page scroll
+
+    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = clamp(transform.scale * scaleFactor, MIN_SCALE, MAX_SCALE);
+    
+    // If we've hit the scale limits, don't proceed with the transform
+    if ((transform.scale === MAX_SCALE && scaleFactor > 1) ||
+        (transform.scale === MIN_SCALE && scaleFactor < 1)) {
+      return;
+    }
+    
+    const boundingRect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - boundingRect.left;
+    const mouseY = e.clientY - boundingRect.top;
+
+    // Calculate the point to zoom towards (in SVG coordinates)
+    const zoomPointX = (mouseX - transform.x) / transform.scale;
+    const zoomPointY = (mouseY - transform.y) / transform.scale;
+
+    // Calculate new position
+    const newX = mouseX - zoomPointX * newScale;
+    const newY = mouseY - zoomPointY * newScale;
+
+    // Calculate bounds
+    const maxX = mapWidth * (newScale - 1);
+    const maxY = mapHeight * (newScale - 1);
+
+    // Clamp the position while allowing zoom at edges
+    const clampedX = clamp(newX, -maxX, 0);
+    const clampedY = clamp(newY, -maxY, 0);
+
+    setTransform({
+      scale: newScale,
+      x: clampedX,
+      y: clampedY
+    });
+  };
+
+  const handleMouseDown = (e) => {
+    if (e.button === 0) { // Left mouse button only
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+
+      // Calculate bounds based on current scale
+      const maxX = mapWidth * (transform.scale - 1);
+      const maxY = mapHeight * (transform.scale - 1);
+
+      // Clamp position to prevent white space
+      setTransform(prev => ({
+        ...prev,
+        x: clamp(newX, -maxX, 0),
+        y: clamp(newY, -maxY, 0)
+      }));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMapEnter = () => {
+    document.body.style.overflow = 'hidden';
+  };
+
+  const handleMapLeave = () => {
+    document.body.style.overflow = 'auto';
+    setIsDragging(false);
+  };
+
   const getNodeCoordinates = (node) => {
     const x = ((node.lon + 180) / 360) * mapWidth;
     const y = ((90 - node.lat) / 180) * mapHeight;
     return [x, y];
   };
-  
-  // Get connected nodes for a given node name
   const getConnectedNodes = (nodeName) => {
     const connections = new Set();
     
-    // Check satellite links
     satelliteLinks.forEach(link => {
       if (link.node1_name === nodeName && link.up) {
         connections.add(link.node2_name);
@@ -50,7 +140,6 @@ const SatelliteMap = () => {
       }
     });
     
-    // Check ground links
     groundUplinks.forEach(station => {
       if (station.ground_node === nodeName) {
         station.uplinks.forEach(uplink => {
@@ -68,11 +157,9 @@ const SatelliteMap = () => {
     return connections;
   };
   
-  // Create links between nodes
   const renderLinks = () => {
     const links = [];
     
-    // Helper to find node by name
     const findNode = (name) => {
       const sat = satellites.find(s => s.name === name);
       if (sat) return sat;
@@ -85,12 +172,13 @@ const SatelliteMap = () => {
       if (node1 && node2) {
         const [x1, y1] = getNodeCoordinates(node1);
         const [x2, y2] = getNodeCoordinates(node2);
+        
         links.push(
           React.createElement('line', {
-            key: key,
+            key,
             x1, y1, x2, y2,
             stroke: color,
-            strokeWidth: hoveredNode ? "2" : "1",
+            strokeWidth: (hoveredNode ? "2" : "1") / transform.scale,
             strokeOpacity: opacity
           })
         );
@@ -98,7 +186,6 @@ const SatelliteMap = () => {
     };
     
     if (hoveredNode) {
-      // When a node is hovered, only show its connections
       const connections = getConnectedNodes(hoveredNode);
       connections.forEach((connectedNode, index) => {
         const isSatelliteLink = hoveredNode.startsWith('R') && connectedNode.startsWith('R');
@@ -111,7 +198,6 @@ const SatelliteMap = () => {
         );
       });
     } else {
-      // Normal link display based on toggles
       if (showSatelliteLinks) {
         satelliteLinks.forEach((link, index) => {
           if (link.up) {
@@ -144,17 +230,15 @@ const SatelliteMap = () => {
     return links;
   };
 
-  // Handle node click to open in new tab
   const handleNodeClick = (nodeName) => {
     const path = nodeName.startsWith('R') ? 'router' : 'station';
     window.open(`/view/${path}/${nodeName}`, '_blank');
   };
-  
+
   return React.createElement(
     'div', 
     { className: "w-full max-w-4xl mt-4" },
     [
-      // Controls
       React.createElement(
         'div',
         { className: "mb-4 flex gap-4" },
@@ -187,10 +271,17 @@ const SatelliteMap = () => {
           )
         ]
       ),
-      // Map
       React.createElement(
         'div', 
-        { className: "relative w-full h-96 border border-gray-200 rounded-lg" },
+        { 
+          className: "relative w-full h-96 border border-gray-200 rounded-lg overflow-hidden",
+          onWheel: handleWheel,
+          onMouseDown: handleMouseDown,
+          onMouseMove: handleMouseMove,
+          onMouseUp: handleMouseUp,
+          onMouseEnter: handleMapEnter,
+          onMouseLeave: handleMapLeave,
+        },
         React.createElement(
           'svg',
           {
@@ -199,96 +290,104 @@ const SatelliteMap = () => {
             style: { backgroundColor: '#f0f0f0' }
           },
           [
-            // Grid lines - latitudes
-            ...Array.from({ length: 9 }, (_, i) => 
-              React.createElement('line', {
-                key: `lat-${i}`,
-                x1: 0,
-                y1: i * (mapHeight/8),
-                x2: mapWidth,
-                y2: i * (mapHeight/8),
-                stroke: "#ccc",
-                strokeWidth: "1"
-              })
-            ),
-            // Grid lines - longitudes
-            ...Array.from({ length: 17 }, (_, i) => 
-              React.createElement('line', {
-                key: `lon-${i}`,
-                x1: i * (mapWidth/16),
-                y1: 0,
-                x2: i * (mapWidth/16),
-                y2: mapHeight,
-                stroke: "#ccc",
-                strokeWidth: "1"
-              })
-            ),
-            // Links
-            ...renderLinks(),
-            // Ground Stations
-            ...groundStations.map((station, index) => {
-              const x = ((station.lon + 180) / 360) * mapWidth;
-              const y = ((90 - station.lat) / 180) * mapHeight;
-              
-              return React.createElement(
-                'g',
-                { 
-                  key: `gs-${station.name}`,
-                  onMouseEnter: () => setHoveredNode(station.name),
-                  onMouseLeave: () => setHoveredNode(null),
-                  onClick: () => handleNodeClick(station.name),
-                  style: { cursor: 'pointer' }
-                },
-                [
-                  React.createElement('rect', {
-                    x: x - 4,
-                    y: y - 4,
-                    width: 8,
-                    height: 8,
-                    fill: hoveredNode === station.name ? "#dc2626" : "#ef4444",
-                    transform: `rotate(45 ${x} ${y})`
-                  }),
-                  React.createElement('text', {
-                    x: x + 6,
-                    y: y + 4,
-                    fontSize: "10",
-                    fill: "#ef4444",
-                    fontWeight: hoveredNode === station.name ? "bold" : "normal"
-                  }, station.name)
-                ]
-              );
-            }),
-            // Satellites
-            ...satellites.map((sat, index) => {
-              const x = ((sat.lon + 180) / 360) * mapWidth;
-              const y = ((90 - sat.lat) / 180) * mapHeight;
-              
-              return React.createElement(
-                'g',
-                { 
-                  key: `sat-${sat.name}`,
-                  onMouseEnter: () => setHoveredNode(sat.name),
-                  onMouseLeave: () => setHoveredNode(null),
-                  onClick: () => handleNodeClick(sat.name),
-                  style: { cursor: 'pointer' }
-                },
-                [
-                  React.createElement('circle', {
-                    cx: x,
-                    cy: y,
-                    r: hoveredNode === sat.name ? "5" : "4",
-                    fill: hoveredNode === sat.name ? "#1e40af" : "#1d4ed8"
-                  }),
-                  React.createElement('text', {
-                    x: x + 6,
-                    y: y + 4,
-                    fontSize: "10",
-                    fill: "#1d4ed8",
-                    fontWeight: hoveredNode === sat.name ? "bold" : "normal"
-                  }, sat.name)
-                ]
-              );
-            })
+            React.createElement(
+              'g',
+              {
+                transform: `translate(${transform.x},${transform.y}) scale(${transform.scale})`
+              },
+              [
+                // Single background image
+                React.createElement('image', {
+                  href: "/static/images/worldmap.jpg",
+                  x: 0,
+                  y: 0,
+                  width: mapWidth,
+                  height: mapHeight,
+                  preserveAspectRatio: "none"
+                }),
+                ...renderLinks(),
+                ...groundStations.map((station, index) => {
+                  const x = ((station.lon + 180) / 360) * mapWidth;
+                  const y = ((90 - station.lat) / 180) * mapHeight;
+                  
+                  return React.createElement(
+                    'g',
+                    { 
+                      key: `gs-${station.name}`,
+                      onMouseEnter: (e) => {
+                        e.stopPropagation();
+                        setHoveredNode(station.name);
+                      },
+                      onMouseLeave: (e) => {
+                        e.stopPropagation();
+                        setHoveredNode(null);
+                      },
+                      onClick: (e) => {
+                        e.stopPropagation();
+                        handleNodeClick(station.name);
+                      },
+                      style: { cursor: 'pointer' }
+                    },
+                    [
+                      React.createElement('rect', {
+                        x: x - 4,
+                        y: y - 4,
+                        width: 8 / transform.scale,
+                        height: 8 / transform.scale,
+                        fill: hoveredNode === station.name ? "#dc2626" : "#ef4444",
+                        transform: `rotate(45 ${x} ${y})`
+                      }),
+                      React.createElement('text', {
+                        x: x + 6,
+                        y: y + 4,
+                        fontSize: 10 / transform.scale,
+                        fill: "#ef4444",
+                        fontWeight: hoveredNode === station.name ? "bold" : "normal"
+                      }, station.name)
+                    ]
+                  );
+                }),
+                ...satellites.map((sat, index) => {
+                  const x = ((sat.lon + 180) / 360) * mapWidth;
+                  const y = ((90 - sat.lat) / 180) * mapHeight;
+                  
+                  return React.createElement(
+                    'g',
+                    { 
+                      key: `sat-${sat.name}`,
+                      onMouseEnter: (e) => {
+                        e.stopPropagation();
+                        setHoveredNode(sat.name);
+                      },
+                      onMouseLeave: (e) => {
+                        e.stopPropagation();
+                        setHoveredNode(null);
+                      },
+                      onClick: (e) => {
+                        e.stopPropagation();
+                        handleNodeClick(sat.name);
+                      },
+                      style: { cursor: 'pointer' }
+                    },
+                    [
+                      React.createElement('circle', {
+                        cx: x,
+                        cy: y,
+                        r: (hoveredNode === sat.name ? 5 : 4) / transform.scale,
+                        fill: hoveredNode === sat.name ? "#1e40af" : "#1d4ed8"
+                      }),
+                      React.createElement('text', {
+                        x: x + 6,
+                        y: y + 4,
+                        fontSize: 10 / transform.scale,
+                        fill: "#1d4ed8",
+                        fontWeight: hoveredNode === sat.name ? "bold" : "normal"
+                      }, sat.name)
+                    ]
+                  );
+                })
+              ]
+            )
           ]
         )
       )
