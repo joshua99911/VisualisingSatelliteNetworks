@@ -1,5 +1,5 @@
 [network]
-rings=4
+rings=6
 routers=8
 ground_stations=yes
 
@@ -7,4 +7,4 @@ ground_stations=yes
 stable_monitors=yes
 
 [physical]
-min_altitude=15
+min_altitude=10
