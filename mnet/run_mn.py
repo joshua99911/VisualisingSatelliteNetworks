@@ -15,6 +15,7 @@ from mininet.net import Mininet
 from mininet.log import setLogLevel, info
 from mininet.cli import CLI
 import mnet.driver
+from mininet.term import makeTerm
 
 import torus_topo
 import frr_config_topo
@@ -139,7 +140,13 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
     print(f"\n****Running {num_rings} rings with {num_routers} per ring, stable monitors {stable_monitors}, "
           f"ground_stations {ground_stations}, monitoring {'enabled' if enable_monitoring else 'disabled'}")
     
+    # Open xterm for specific nodes
+    node_list = [net.get('G_PAO'), net.get('G_SYD'), net.get('R0_0')]  # Replace with your node names
+    for node in node_list:
+        makeTerm(node, title=f'Terminal for {node.name}')
+        print("Made Terminal for ", {node.name})
 
+        
     if use_cli and net is not None:
         CLI(net)
     else:
