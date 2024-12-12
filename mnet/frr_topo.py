@@ -23,6 +23,8 @@ import simapi
 import mnet.pmonitor
 
 
+
+
 class RouteNode(mininet.node.Node):
     """
     Mininet node with a loopback.
@@ -682,6 +684,36 @@ class FrrSimRuntime:
         self._update_default_route(station)
         return True
 
+    def _update_dns_for_uplink(self, station_name: str, sat_name: str, ip1: ipaddress.IPv4Interface, ip2: ipaddress.IPv4Interface, add: bool = True):
+        """
+        Update DNS entries for a dynamic uplink.
+        
+        Args:
+            station_name: Name of the ground station
+            sat_name: Name of the satellite
+            ip1: Ground station's interface IP
+            ip2: Satellite's interface IP
+            add: True to add entries, False to remove them
+        """
+        # Create DNS entries for both ends of the uplink
+        dns_entries = [
+            f"{format(ip1.ip)}\t{station_name}-TO-{sat_name} {station_name}-uplink",
+            f"{format(ip2.ip)}\t{sat_name}-TO-{station_name} {sat_name}-downlink"
+        ]
+        
+        # Update hosts file in each network namespace
+        for node in self.net.hosts:
+            if add:
+                # Add new entries
+                for entry in dns_entries:
+                    node.cmd(f'echo "{entry}" >> /etc/netns/{node.name}/hosts')
+                    node.cmd(f'echo "{entry}" >> /etc/hosts')
+            else:
+                # Remove entries
+                for entry in dns_entries:
+                    node.cmd(f'sed -i "/{entry}/d" /etc/netns/{node.name}/hosts')
+                    node.cmd(f'sed -i "/{entry}/d" /etc/hosts')
+
     def _create_uplink(
         self,
         station_name: str,
@@ -692,26 +724,53 @@ class FrrSimRuntime:
     ):
         # Create the link
         self.net.addLink(
-                station_name, sat_name, params1={"ip": format(ip1), "delay": "1ms"}, params2={"ip": format(ip2), "delay": "1ms"},
+            station_name, sat_name, 
+            params1={"ip": format(ip1), "delay": "1ms"}, 
+            params2={"ip": format(ip2), "delay": "1ms"},
             cls=mininet.link.TCLink, 
         )
 
-        # Configure FRR daemons to handle the uplink
         station = self.ground_stations[station_name]
         frr_router = self.routers[sat_name]
 
-        # Set a static route on the satellite node that refers to the ground station loopback IP
-        # ip route {ground station ip /32} {ground station pool ip}
-        frr_router.config_frr("staticd", [ f"ip route {station.defaultIP()}/32 {format(ip1.ip)}" ])
+        # Configure static route and OSPF
+        frr_router.config_frr("staticd", [f"ip route {station.defaultIP()}/32 {format(ip1.ip)}"])
+        ospf_commands = [
+            "router ospf",
+            f"network {format(ip_nw)} area 0",
+            f"network {station.defaultIP()}/32 area 0",
+            "exit"
+        ]
+        frr_router.config_frr("ospfd", ospf_commands)
+
+        # Add DNS entries for the uplink
+        self._update_dns_for_uplink(station_name, sat_name, ip1, ip2, add=True)
+
+        # Add default route on ground station
+        station_node = self.net.getNodeByName(station_name)
+        if station_node is not None:
+            route = f"via {format(ip2.ip)}"
+            station_node.cmd(f'ip route add default {route}')
 
 
     def _remove_link(self, station_name: str, sat_name: str, ip_nw: ipaddress.IPv4Network, ip: ipaddress.IPv4Interface) -> None:
         station_node = self.net.getNodeByName(station_name)
         sat_node = self.net.getNodeByName(sat_name)
+        
+        # Remove DNS entries before removing the link
+        uplink = self.ground_stations[station_name].uplinks[0]  # Get the uplink to get IPs
+        self._update_dns_for_uplink(
+            station_name, 
+            sat_name, 
+            uplink.ip_pool_entry.ip1, 
+            uplink.ip_pool_entry.ip2, 
+            add=False
+        )
+        
         # Remove static route
         station = self.ground_stations[station_name]
         frr_router = self.routers[sat_name]
-        frr_router.config_frr("staticd", [ f"no ip route {station.defaultIP()}/32 {format(ip.ip)}" ])
+        frr_router.config_frr("staticd", [f"no ip route {station.defaultIP()}/32 {format(ip.ip)}"])
         self.net.delLinkBetween(station_node, sat_node)
 
     def _update_default_route(self, station: GroundStation) -> None:
