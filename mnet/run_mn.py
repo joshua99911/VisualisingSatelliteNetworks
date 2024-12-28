@@ -23,10 +23,10 @@ import mnet.frr_topo
 
 
 def configure_dns(net, graph):
-    """
+    '''
     Configure DNS for all nodes in the network by updating /etc/hosts
     in each node's namespace. Include interface IPs with descriptive names.
-    """
+    '''
     # First, collect all IP addresses and hostnames
     hosts_entries = []
     
@@ -105,6 +105,13 @@ def signal_handler(sig, frame):
     print("Ctrl-C received, shutting down....")
     # Ensure tcpdump is stopped
     os.system('pkill -f tcpdump')
+    # Restore original DNS files if they exist
+    if os.path.exists('/etc/hosts.mininet.bak'):
+        os.system('cp /etc/hosts.mininet.bak /etc/hosts')
+        os.system('rm /etc/hosts.mininet.bak')
+    if os.path.exists('/etc/resolv.conf.mininet.bak'):
+        os.system('cp /etc/resolv.conf.mininet.bak /etc/resolv.conf')
+        os.system('rm /etc/resolv.conf.mininet.bak')
     mnet.driver.invoke_shutdown()
 
 
@@ -187,6 +194,7 @@ def merge_captures():
             os.unlink(file)
 
 
+
 def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground_stations: bool, enable_monitoring: bool = False):
     # Create a networkx graph annotated with FRR configs
     graph = torus_topo.create_network(num_rings, num_routers, ground_stations)
@@ -199,9 +207,15 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
 
     net = None
     if use_mnet:
+        # Backup original DNS files
+        if os.path.exists('/etc/hosts'):
+            os.system('cp /etc/hosts /etc/hosts.mininet.bak')
+        if os.path.exists('/etc/resolv.conf'):
+            os.system('cp /etc/resolv.conf /etc/resolv.conf.mininet.bak')
+        
         net = Mininet(topo=topo)
         net.start()
-
+        
         # Configure DNS after network starts but before monitoring
         configure_dns(net, graph)
         print("configured DNS")
@@ -226,7 +240,6 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
         makeTerm(node, title=f'Terminal for {node.name}')
         print("Made Terminal for ", {node.name})
 
-        
     if use_cli and net is not None:
         CLI(net)
     else:
@@ -240,12 +253,17 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
         os.system('pkill -f tcpdump')
         merge_captures()
     
-    frrt.stop_routers()
-
     if net is not None:
         cleanup_dns(net)
         net.stop()
 
+    # Restore original DNS files
+    if os.path.exists('/etc/hosts.mininet.bak'):
+        os.system('cp /etc/hosts.mininet.bak /etc/hosts')
+        os.system('rm /etc/hosts.mininet.bak')
+    if os.path.exists('/etc/resolv.conf.mininet.bak'):
+        os.system('cp /etc/resolv.conf.mininet.bak /etc/resolv.conf')
+        os.system('rm /etc/resolv.conf.mininet.bak')
 
 def usage():
     print("Usage: python3 -m mnet.run_mn [--cli] [--no-mnet] [--monitor] <config_file>")

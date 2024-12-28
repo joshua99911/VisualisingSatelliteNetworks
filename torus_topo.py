@@ -20,9 +20,9 @@ LAT = "latitude"
 LON = "longitude"
 
 def create_network(num_rings: int =NUM_RINGS, num_ring_nodes: int =NUM_RING_NODES, ground_stations: bool = True) -> networkx.Graph:
-    """
+    '''
     Create a torus network of the given size annotated with orbital information.
-    """
+    '''
     graph: networkx.Graph = networkx.Graph()
     graph.graph["rings"] = num_rings
     graph.graph["ring_nodes"] = num_ring_nodes

@@ -1,0 +1,14 @@
+site_name: Visualising Satellite Networks
+repo_url: https://github.com/joshua99911/VisualisingSatelliteNetworks
+site_url: https://joshua99911.github.io/VisualisingSatelliteNetworks
+repo_name: GitHub
+nav:
+  - Home: index.md
+  - About: about.md
+  - DocStrings: DocStrings.md
+theme:
+  name: mkdocs
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
