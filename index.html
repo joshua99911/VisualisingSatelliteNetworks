@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="None">
+        
+        
+        <link rel="shortcut icon" href="img/favicon.ico">
+        <title>Visualising Satellite Networks</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/fontawesome.min.css" rel="stylesheet">
+        <link href="css/brands.min.css" rel="stylesheet">
+        <link href="css/solid.min.css" rel="stylesheet">
+        <link href="css/v4-font-face.min.css" rel="stylesheet">
+        <link href="css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body class="homepage">
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href=".">Visualising Satellite Networks</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="." class="nav-link active" aria-current="page">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="about/" class="nav-link">About</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="DocStrings/" class="nav-link">DocStrings</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" class="nav-link disabled">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="about/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/joshua99911/VisualisingSatelliteNetworks/edit/master/docs/index.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#satellites" class="nav-link">Satellites</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#setup" class="nav-link">Setup</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#animate-ideal-orbits" class="nav-link">Animate Ideal Orbits</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#calculate-actual-satellite-positions" class="nav-link">Calculate Actual Satellite Positions</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#animate-real-satellite-groups" class="nav-link">Animate Real Satellite Groups</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#network-topology-and-routes" class="nav-link">Network Topology and Routes</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#satellite-positions" class="nav-link">Satellite Positions</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#network-topology" class="nav-link">Network Topology</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#mininet-emulation" class="nav-link">Mininet Emulation</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#setup_1" class="nav-link">Setup</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#run-full-emulation" class="nav-link">Run Full Emulation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#run-the-ui-sim-stub" class="nav-link">Run the UI / Sim Stub</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#todo-plans" class="nav-link">TODO / Plans</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="1"><a href="#useful-information" class="nav-link">Useful Information</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="satellites">Satellites</h1>
+<p>Scripts and programs for visualizing and modeling satellite orbits and
+simulating satellite networks.</p>
+<p>We use Panda3D to run an interactive 3D view of satellites oribiting around the 
+earth, and use the Skyfield astronomy library to determin the position of
+the satellites.</p>
+<h1 id="setup">Setup</h1>
+<p>For the basic set of scripts, we use Panda#D, networkx, and skyfield.</p>
+<p>To run these, create and activate a Python virtual environment and use 
+pip to install the dependencies.  In the base directory:</p>
+<pre><code>python3 -m venv venv
+. venv/bin/activate
+pip install -r requirements.txt
+</code></pre>
+<h1 id="animate-ideal-orbits">Animate Ideal Orbits</h1>
+<p>We use Panda3d elements to simulate the orbits of a satellite 
+network by creating 40 rotating disks inclined at 53 degrees and 
+attaching spheres to the disks represent satellites.</p>
+<p>Run an animation of a 40x40 LEO satellite conselation:</p>
+<pre><code>python animate_orbits.py
+</code></pre>
+<ul>
+<li>Enter q to quit.</li>
+<li>Use arrow keys to change the view</li>
+</ul>
+<p><img alt="screenshot" src="orbits.png" /></p>
+<h1 id="calculate-actual-satellite-positions">Calculate Actual Satellite Positions</h1>
+<p>We use the Skyfield astronomy library to calcualte the position of
+earth satellites.</p>
+<h1 id="animate-real-satellite-groups">Animate Real Satellite Groups</h1>
+<p>Use TLE files to position and update groups of Satellites in real time:</p>
+<pre><code>python orbit_set.py [ system [ time-factor] ]
+</code></pre>
+<p>The available systems are:
+- starlink
+- stations (space stations)
+- kuiper
+- GPS
+- artificial (a 40x40 system)</p>
+<p>The time-rate defaults to 2X real time, and depending on the number of 
+satellites in the system and the speed of the computer and GPU running the
+software, may be able to run at 10X real time.</p>
+<p>You can control the image display:
+- + and - top zoom in and out (shift + does not yet work)
+- arrow keys to change the orientation of the world
+- q to quit</p>
+<p><img alt="screenshot" src="starlink.png" /></p>
+<h1 id="network-topology-and-routes">Network Topology and Routes</h1>
+<p>Build a topology and routing tables</p>
+<pre><code>python network.py
+
+</code></pre>
+<h1 id="satellite-positions">Satellite Positions</h1>
+<p>Generate satellite positions with Skyfield and CTSC</p>
+<pre><code>python sat_pos_samples.py
+</code></pre>
+<h1 id="network-topology">Network Topology</h1>
+<p>Utilities to explore a possible network topology of a satellite network where each
+satellite is a router with 4 ports connecting to neighboring satellites in a torus 
+topology.</p>
+<ul>
+<li>torus_topo: Generate a networkx graph of a connected set of rings (default 40x40)</li>
+<li>frr_config_topo: Generate FRR network configurations for a networkx topology</li>
+<li>test_large_frr: Generate, configure, and exercise a large torus topology</li>
+</ul>
+<p>Exercise a large torus topology, generate routes, and trace paths:</p>
+<pre><code>python torus_topo.py
+</code></pre>
+<p>Exercise FRR network configuration generation on a small network:</p>
+<pre><code>python frr_config_topo.py
+</code></pre>
+<p>Generate a large torus topology and generate FRR network config information</p>
+<pre><code>python test_large_frr.py
+</code></pre>
+<h1 id="mininet-emulation">Mininet Emulation</h1>
+<p>Run an mininet based emulation of an FRR based network toplogy.</p>
+<p>This setup contains two parts:
+- A mininet process that creates network containers and launches FRR processes.
+- A physical simulator process that calculates satellite positions and link states.</p>
+<p>The network emulation uses a FastAPI based interface for control and monitoring and
+provides a FastAPI user interface. </p>
+<p>Connect to http://localhost:8000 for the UI.
+(Substitute name / IP address of VM instance if using a VM and web browser is outside of the VM)</p>
+<h2 id="setup_1">Setup</h2>
+<p>Running the full emulation requires Mininet and FRR to be installed as well as the requirements
+listed in mnet/requriements.txt</p>
+<pre><code>pip install -r mnet/requirements.txt
+</code></pre>
+<p>Since mininet must run as root, it is recommended that you run the full emulation in a VM.
+See <a href="http://github.com/jmwanderer/mininet_frr">mininet_frr</a> for an environment that will run
+the full emulation.</p>
+<h2 id="run-full-emulation">Run Full Emulation</h2>
+<p>By default the simulation runs with a 4 ring by 4 satellite per ring configuration.
+You can run a larger config by specifying the number of rings and nodes per
+ring on the run_mn and geosimsat command links. Obviously these should be
+the same.</p>
+<p>Run the mininet environment:</p>
+<pre><code>sudo python -m mnet.run_mn mnet/configs/small.net
+</code></pre>
+<p>Run the satellite location simulation:</p>
+<pre><code>python geosimsat.py mnet/configs/small.net
+</code></pre>
+<h2 id="run-the-ui-sim-stub">Run the UI / Sim Stub</h2>
+<p>For development and test, the FastAPI driver and network physical simulator
+can be run without running mininet and the FRR processes. The mininet python libraries
+are needed, but FRR does not need to be installed.
+Running the stub:
+- is much more light weight
+- does not run as root
+- is easy and safe to run without using a VM
+- does not require FRR to be installed
+- will not need Mininet to be installed</p>
+<p>Running the stub simulates that satellite positions and physical events, 
+provides the UI, but does not emulate the network.</p>
+<pre><code>sudo python -m mnet.run_mn mnet/configs/small.net --no-mnet
+</code></pre>
+<h2 id="todo-plans">TODO / Plans</h2>
+<p>The network currently runs an OSPF, staticd, and zebra daemon on each node to exchange.
+Possible plans include:
+- Add a flat world map and chart the positions of the satellites
+- Add ground stations at fixed positions
+    - Create and support a node type: SAT or GROUND
+    - Initially make ground a mininet host.
+- Create links between ground stations and nearby satellites
+- Satellites to inject OSPF route for connected ground station
+- Ground station sets and updates default routes to preferred uplink</p>
+<ul>
+<li>Adding hosts to connect as staellites move overhead</li>
+<li>Adding an OF controller to handle host connectivity (at some point)</li>
+<li>Using an agent on host and satellites for control and connectivity testing</li>
+</ul>
+<h1 id="useful-information">Useful Information</h1>
+<ul>
+<li><a href="https://rhodesmill.org/skyfield/earth-satellites.html">Skyfield Library</a></li>
+<li><a href="https://satnetwork.github.io">Network topology design at 27,000 km.hour</a></li>
+<li><a href="https://celestrak.org/satcat/search.php">Celes Track Satellite Catalog</a></li>
+<li><a href="https://networkx.org/documentation/stable/index.html">NetworkX</a></li>
+<li>[draft-li-arch-sat-04][https://datatracker.ietf.org/doc/html/draft-li-arch-sat-04]</li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = ".",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="js/base.js"></script>
+        <script src="search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2024-12-28 10:44:41.099026+00:00
+-->
