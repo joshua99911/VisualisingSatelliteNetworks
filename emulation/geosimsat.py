@@ -16,9 +16,9 @@ import sys
 import datetime
 import time
 
-import torus_topo
-import simclient
-import simapi
+from emulation import torus_topo
+from emulation import simclient
+from emulation import simapi
 
 import networkx
 from skyfield.api import load, wgs84 # type: ignore

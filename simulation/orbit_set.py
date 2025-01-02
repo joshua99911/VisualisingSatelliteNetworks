@@ -17,7 +17,7 @@ import sys
 import time
 import threading
 
-import torus_topo
+import emulation.torus_topo
 
 from direct.actor.Actor import Actor
 from panda3d.core import TextNode
@@ -53,9 +53,10 @@ done = False
 DEFAULT_TIME_RATE = 10  # Default to 10x speed
 time_rate = DEFAULT_TIME_RATE
 
+
 # Global variables accessed by both threads, not protected by a mutex
 # As currently structured, this should not cause a problem (right??)
-last_time_sample: datetime.datetime = datetime.datetime.now(tz=datetime.UTC)
+last_time_sample: datetime.datetime = datetime.datetime.now(tz=datetime.timezone.utc)
 current_vtime: datetime.datetime = last_time_sample
 
 # True means that the user has paused the motion, we freeze time
@@ -72,7 +73,7 @@ def vtime_now() -> datetime.datetime:
     global vtime_paused
     if not vtime_paused:
         # Calculate delta from last time sample and add to current time
-        time_now = datetime.datetime.now(tz=datetime.UTC)
+        time_now = datetime.datetime.now(tz=datetime.timezone.utc)
         delta = time_now - last_time_sample
         delta = delta * time_rate
         last_time_sample = time_now
@@ -88,7 +89,7 @@ def pause_vtime():
 def resume_vtime():
     global last_time_sample
     global vtime_paused
-    last_time_sample = datetime.datetime.now(tz=datetime.UTC)
+    last_time_sample = datetime.datetime.now(tz=datetime.timezone.utc)
     vtime_paused = False
 
 

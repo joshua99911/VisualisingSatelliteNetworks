@@ -10,7 +10,7 @@ Currently assumes all nodes run OSPF in one area.
 import ipaddress
 import networkx
 
-import torus_topo
+from emulation import torus_topo
 
 
 def annotate_graph(graph: networkx.Graph):

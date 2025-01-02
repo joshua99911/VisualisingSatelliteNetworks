@@ -17,10 +17,10 @@ import mininet.net
 import mininet.link
 import mininet.util
 
-import torus_topo
-import frr_config_topo
-import simapi
-import mnet.pmonitor
+from emulation import torus_topo
+from emulation import frr_config_topo
+from emulation import simapi
+from emulation.mnet import pmonitor
 
 
 
@@ -104,20 +104,20 @@ class MNetNodeWrap:
     def startMonitor(self, db_master_file, db_master):
         print(f"start monitor {self.name}:{self.defaultIP()}")
         self.sendCmd(
-            f"python3 -m mnet.pmonitor monitor '{db_master_file}' '{self.working_db}' {self.defaultIP()} >> /dev/null 2>&1  &"
+            f"python3 -m emulation.mnet.pmonitor monitor '{db_master_file}' '{self.working_db}' {self.defaultIP()} >> /dev/null 2>&1  &"
         )
-        mnet.pmonitor.set_running(db_master, self.defaultIP(), True)
+        pmonitor.set_running(db_master, self.defaultIP(), True)
 
     def stopMonitor(self, db_master):
-        mnet.pmonitor.set_can_run(db_master, self.defaultIP(), False)
+        pmonitor.set_can_run(db_master, self.defaultIP(), False)
         os.unlink(self.working_db)
 
     def update_monitor_stats(self):
         # Only get stats if DB is being used
         if os.path.getsize(self.working_db) > 0:
-            db = mnet.pmonitor.open_db(self.working_db)
-            good, total = mnet.pmonitor.get_status_count(db, self.stable_node())
-            self.last_five_pings = mnet.pmonitor.get_last_five(db)
+            db = pmonitor.open_db(self.working_db)
+            good, total = pmonitor.get_status_count(db, self.stable_node())
+            self.last_five_pings = pmonitor.get_last_five(db)
             db.close()
             return good, total
         return 0, 0
@@ -474,7 +474,7 @@ class FrrSimRuntime:
         # Not stable targets - don't monitor
         for station in self.ground_stations.values():
             data.append((station.name, station.defaultIP(), station.stable_node()))
-        mnet.pmonitor.init_targets(self.db_file, data)
+        pmonitor.init_targets(self.db_file, data)
 
         # Start all nodes
         for node in self.nodes.values():
@@ -485,7 +485,7 @@ class FrrSimRuntime:
             node.waitOutput()
 
         # Start monitoring on all nodes
-        db_master = mnet.pmonitor.open_db(self.db_file)
+        db_master = pmonitor.open_db(self.db_file)
         for node in self.nodes.values():
             # Start monitor if node is not considered always reachable
             # or we are running monitoring from the stable nodes.
@@ -500,7 +500,7 @@ class FrrSimRuntime:
 
     def stop_routers(self):
         # Stop monitor on all nodes
-        db_master = mnet.pmonitor.open_db(self.db_file)
+        db_master = pmonitor.open_db(self.db_file)
         for node in self.nodes.values():
             node.stopMonitor(db_master)
         db_master.close()
@@ -554,8 +554,8 @@ class FrrSimRuntime:
         node = self.nodes[name]
         result = []
         if not self.stub_net and os.path.getsize(node.working_db) > 0:
-            db_working = mnet.pmonitor.open_db(node.working_db)
-            result = mnet.pmonitor.get_status_list(db_working)
+            db_working = pmonitor.open_db(node.working_db)
+            result = pmonitor.get_status_list(db_working)
             db_working.close()
         return result
 

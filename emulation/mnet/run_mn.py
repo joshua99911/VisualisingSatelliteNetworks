@@ -14,12 +14,12 @@ import time
 from mininet.net import Mininet
 from mininet.log import setLogLevel, info
 from mininet.cli import CLI
-import mnet.driver
+from emulation.mnet import driver
 from mininet.term import makeTerm
 
-import torus_topo
-import frr_config_topo
-import mnet.frr_topo
+from emulation import torus_topo
+from emulation import frr_config_topo
+from emulation.mnet import frr_topo
 
 
 def configure_dns(net, graph):
@@ -112,7 +112,7 @@ def signal_handler(sig, frame):
     if os.path.exists('/etc/resolv.conf.mininet.bak'):
         os.system('cp /etc/resolv.conf.mininet.bak /etc/resolv.conf')
         os.system('rm /etc/resolv.conf.mininet.bak')
-    mnet.driver.invoke_shutdown()
+    driver.invoke_shutdown()
 
 
 def setup_packet_capture(net, graph):
@@ -202,7 +202,7 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
     frr_config_topo.dump_graph(graph)
 
     # Use the networkx graph to build a mininet topology
-    topo = mnet.frr_topo.NetxTopo(graph)
+    topo = frr_topo.NetxTopo(graph)
     print("generated topo")
 
     net = None
@@ -226,7 +226,7 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
             time.sleep(2)
             setup_packet_capture(net, graph)
 
-    frrt = mnet.frr_topo.FrrSimRuntime(topo, net, stable_monitors)
+    frrt = frr_topo.FrrSimRuntime(topo, net, stable_monitors)
     print("created runtime")
 
     frrt.start_routers()
@@ -245,7 +245,7 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
     else:
         print("Launching web API. Use /shutdown to halt")
         signal.signal(signal.SIGINT, signal_handler)
-        mnet.driver.run(frrt)
+        driver.run(frrt)
     
     # Cleanup before stopping
     if net is not None and enable_monitoring:

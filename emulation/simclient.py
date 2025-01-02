@@ -2,7 +2,7 @@
 Client to drive the JSON api implemented in driver.py
 """
 import requests
-import simapi
+from emulation import simapi
 
 class Client:
     def __init__(self, url: str) -> None:

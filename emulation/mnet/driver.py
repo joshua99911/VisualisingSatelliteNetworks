@@ -13,8 +13,8 @@ from pydantic import BaseModel
 import uvicorn
 import mininet
 
-from mnet.frr_topo import FrrSimRuntime
-import simapi
+from emulation.mnet.frr_topo import FrrSimRuntime
+from emulation import simapi
 
 
 # TODO:
@@ -117,10 +117,10 @@ def run(frrt: FrrSimRuntime):
 
 
 # Mount static files directory
-app.mount("/static", StaticFiles(directory="mnet/static"), name="static")
+app.mount("/static", StaticFiles(directory="emulation/mnet/static"), name="static")
 
 # Used with HTML templates to generate pages
-templates = Jinja2Templates(directory="mnet/templates")
+templates = Jinja2Templates(directory="emulation/mnet/templates")
 
 
 @app.get("/", response_class=HTMLResponse)
