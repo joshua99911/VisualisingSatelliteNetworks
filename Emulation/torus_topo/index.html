@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://joshua99911.github.io/VisualisingSatelliteNetworks/Emulation/torus_topo/">
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Torus_Topo - Visualising Satellite Networks</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">Visualising Satellite Networks</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../about/" class="nav-link">About</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Emulation</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../purpose/" class="dropdown-item">Purpose</a>
+</li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">Torus_Topo</a>
+</li>
+                                    
+<li>
+    <a href="../simclient/" class="dropdown-item">simclient</a>
+</li>
+                                    
+<li>
+    <a href="../simapi/" class="dropdown-item">simapi</a>
+</li>
+                                    
+<li>
+    <a href="../run_mn/" class="dropdown-item">Run_MN</a>
+</li>
+                                    
+<li>
+    <a href="../pmonitor/" class="dropdown-item">Pmonitor</a>
+</li>
+                                    
+<li>
+    <a href="../geosimsat/" class="dropdown-item">Geosimsat</a>
+</li>
+                                    
+<li>
+    <a href="../frr_topo/" class="dropdown-item">Frr_Topo</a>
+</li>
+                                    
+<li>
+    <a href="../frr_config_topo/" class="dropdown-item">Frr_Config_Topo</a>
+</li>
+                                    
+<li>
+    <a href="../driver/" class="dropdown-item">Driver</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Simulation</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../Simulation/simulation/" class="dropdown-item">Simulation</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../Setup/" class="nav-link">Setup</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../DocStrings/" class="nav-link">DocStrings</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../purpose/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../simclient/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/joshua99911/VisualisingSatelliteNetworks/edit/master/docs/Emulation/torus_topo.md" class="nav-link"><i class="fa-brands fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#torus_topo" class="nav-link">Torus_Topo</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo" class="nav-link">torus_topo</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.OrbitData" class="nav-link">OrbitData</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.create_network" class="nav-link">create_network</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.down_inter_ring_links" class="nav-link">down_inter_ring_links</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.generate_route_table" class="nav-link">generate_route_table</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.ground_stations" class="nav-link">ground_stations</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.run_routing_test" class="nav-link">run_routing_test</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.run_small_test" class="nav-link">run_small_test</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.satellites" class="nav-link">satellites</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.torus_topo.trace_path" class="nav-link">trace_path</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="torus_topo">Torus_Topo</h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="emulation.torus_topo"></a>
+    <div class="doc doc-contents first">
+
+        <p>Create a torus network topology.</p>
+<p>This is a series of connected rings.
+Include test code to generate route maps and test connectivity.</p>
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="emulation.torus_topo.OrbitData" class="doc doc-heading">
+            <code>OrbitData</code>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+
+        <p>Records key orbital information</p>
+
+
+
+
+
+
+              <details class="quote">
+                <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">OrbitData</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Records key orbital information</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">right_ascension</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># degrees</span>
+    <span class="n">inclination</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># degrees</span>
+    <span class="n">mean_anomaly</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># degrees</span>
+    <span class="n">cat_num</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">cat_num_count</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">assign_cat_num</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cat_num</span> <span class="o">=</span> <span class="n">OrbitData</span><span class="o">.</span><span class="n">cat_num_count</span>
+        <span class="n">OrbitData</span><span class="o">.</span><span class="n">cat_num_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">tle_check_sum</span><span class="p">(</span><span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">line</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                <span class="n">val</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span> <span class="o">%</span> <span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">tle_format</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">time_tuple</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">time_tuple</span><span class="o">.</span><span class="n">tm_year</span> <span class="o">%</span> <span class="mi">1000</span> <span class="o">%</span> <span class="mi">100</span>
+        <span class="n">day</span> <span class="o">=</span> <span class="n">time_tuple</span><span class="o">.</span><span class="n">tm_yday</span>
+
+        <span class="n">l1</span> <span class="o">=</span> <span class="n">LINE1</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cat_num</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="mi">342</span><span class="p">)</span>
+        <span class="n">l2</span> <span class="o">=</span> <span class="n">LINE2</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cat_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inclination</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right_ascension</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_anomaly</span>
+        <span class="p">)</span>
+        <span class="n">l1</span> <span class="o">=</span> <span class="n">l1</span> <span class="o">+</span> <span class="n">OrbitData</span><span class="o">.</span><span class="n">tle_check_sum</span><span class="p">(</span><span class="n">l1</span><span class="p">)</span>
+        <span class="n">l2</span> <span class="o">=</span> <span class="n">l2</span> <span class="o">+</span> <span class="n">OrbitData</span><span class="o">.</span><span class="n">tle_check_sum</span><span class="p">(</span><span class="n">l2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.torus_topo.create_network" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">create_network</span><span class="p">(</span><span class="n">num_rings</span><span class="o">=</span><span class="n">NUM_RINGS</span><span class="p">,</span> <span class="n">num_ring_nodes</span><span class="o">=</span><span class="n">NUM_RING_NODES</span><span class="p">,</span> <span class="n">ground_stations</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create a torus network of the given size annotated with orbital information.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">create_network</span><span class="p">(</span><span class="n">num_rings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span><span class="n">NUM_RINGS</span><span class="p">,</span> <span class="n">num_ring_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span><span class="n">NUM_RING_NODES</span><span class="p">,</span> <span class="n">ground_stations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a torus network of the given size annotated with orbital information.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span> <span class="o">=</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s2">&quot;rings&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_rings</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s2">&quot;ring_nodes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_ring_nodes</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s2">&quot;ring_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">graph</span><span class="p">[</span><span class="s2">&quot;inclination&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">53.9</span>
+    <span class="n">prev_ring_num</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">ring_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_rings</span><span class="p">):</span>
+        <span class="n">create_ring</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">ring_num</span><span class="p">,</span> <span class="n">num_ring_nodes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prev_ring_num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">connect_rings</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">prev_ring_num</span><span class="p">,</span> <span class="n">ring_num</span><span class="p">,</span> <span class="n">num_ring_nodes</span><span class="p">)</span>
+        <span class="n">prev_ring_num</span> <span class="o">=</span> <span class="n">ring_num</span>
+    <span class="k">if</span> <span class="n">prev_ring_num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">connect_rings</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">prev_ring_num</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">num_ring_nodes</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ground_stations</span><span class="p">:</span>
+        <span class="n">add_ground_stations</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+
+    <span class="c1"># Set all edges to up</span>
+    <span class="k">for</span> <span class="n">edge_name</span><span class="p">,</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">edge</span><span class="p">[</span><span class="s2">&quot;up&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">graph</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.torus_topo.down_inter_ring_links" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">down_inter_ring_links</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">node_num_list</span><span class="p">,</span> <span class="n">num_rings</span><span class="o">=</span><span class="n">NUM_RINGS</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Mark the inter-ring links down for the specified node numbers on all rings 
+to prevent use during a path trace. This causes many inter-ring links to be down to 
+test the routing functions.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">down_inter_ring_links</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span><span class="p">,</span> <span class="n">node_num_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">num_rings</span><span class="o">=</span><span class="n">NUM_RINGS</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Mark the inter-ring links down for the specified node numbers on all rings </span>
+<span class="sd">    to prevent use during a path trace. This causes many inter-ring links to be down to </span>
+<span class="sd">    test the routing functions.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Set the specified links to down</span>
+    <span class="k">for</span> <span class="n">node_num</span> <span class="ow">in</span> <span class="n">node_num_list</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ring_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_rings</span><span class="p">):</span>
+            <span class="n">node_name</span> <span class="o">=</span> <span class="n">get_node_name</span><span class="p">(</span><span class="n">ring_num</span><span class="p">,</span> <span class="n">node_num</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">neighbor_name</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">adj</span><span class="p">[</span><span class="n">node_name</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">graph</span><span class="p">[</span><span class="n">node_name</span><span class="p">][</span><span class="n">neighbor_name</span><span class="p">][</span><span class="s2">&quot;inter_ring&quot;</span><span class="p">]:</span>
+                    <span class="n">graph</span><span class="p">[</span><span class="n">node_name</span><span class="p">][</span><span class="n">neighbor_name</span><span class="p">][</span><span class="s2">&quot;up&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.torus_topo.generate_route_table" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_route_table</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">node_name</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Breadth first search to generate routes fromthe  start node to all other nodes.
+Routing table provides a next hop and a path length for all possible destinations.</p>
+<p>{ "dest node" : ( path_len, "next hop" )}</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">generate_route_table</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span><span class="p">,</span> <span class="n">node_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Breadth first search to generate routes fromthe  start node to all other nodes.</span>
+<span class="sd">    Routing table provides a next hop and a path length for all possible destinations.</span>
+
+<span class="sd">    { &quot;dest node&quot; : ( path_len, &quot;next hop&quot; )}</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">routes</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Dest: (hops, next hop node)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">node</span><span class="p">[</span><span class="s2">&quot;visited&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># Queue to nodes to visit</span>
+    <span class="n">node_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Mark the start node as visited</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_name</span><span class="p">][</span><span class="s2">&quot;visited&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">visit_node</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span><span class="p">,</span> <span class="n">next_hop</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">visit_node_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Visit a node by adding all neighbors to the visit queue</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># Neighbors already visted are added to the queue, we skip them here</span>
+        <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">visit_node_name</span><span class="p">][</span><span class="s2">&quot;visited&quot;</span><span class="p">]:</span>
+            <span class="k">return</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">visit_node_name</span><span class="p">][</span><span class="s2">&quot;visited&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># This node is reachable from the start node via the given </span>
+        <span class="c1"># next hop from the start node</span>
+        <span class="n">routes</span><span class="p">[</span><span class="n">visit_node_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">path_len</span><span class="p">,</span> <span class="n">next_hop</span><span class="p">)</span>
+
+        <span class="c1"># Enqueue is reachable neighbor for a future visit</span>
+        <span class="k">for</span> <span class="n">neighbor_node_name</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">adj</span><span class="p">[</span><span class="n">visit_node_name</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">visit_node_name</span><span class="p">,</span> <span class="n">neighbor_node_name</span><span class="p">][</span><span class="s2">&quot;up&quot;</span><span class="p">]:</span>
+                <span class="n">node_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">path_len</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">next_hop</span><span class="p">,</span> <span class="n">neighbor_node_name</span><span class="p">))</span>
+
+    <span class="c1"># Enqueue the neighbors of the start node for visiting</span>
+    <span class="k">for</span> <span class="n">neighbor_node_name</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">adj</span><span class="p">[</span><span class="n">node_name</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">node_name</span><span class="p">,</span> <span class="n">neighbor_node_name</span><span class="p">][</span><span class="s2">&quot;up&quot;</span><span class="p">]:</span>
+            <span class="n">node_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">neighbor_node_name</span><span class="p">,</span> <span class="n">neighbor_node_name</span><span class="p">))</span>
+
+    <span class="c1"># Visit all nodes until the queue is empty</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">path_len</span><span class="p">,</span> <span class="n">next_hop</span><span class="p">,</span> <span class="n">visit_node_name</span> <span class="o">=</span> <span class="n">node_list</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">visit_node</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">next_hop</span><span class="p">,</span> <span class="n">path_len</span><span class="p">,</span> <span class="n">visit_node_name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">routes</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.torus_topo.ground_stations" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ground_stations</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return a list of all node names where the node is of type ground</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">ground_stations</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return a list of all node names where the node is of type ground</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Consider converting to using yield</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">TYPE</span><span class="p">]</span> <span class="o">==</span> <span class="n">TYPE_GROUND</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.torus_topo.run_routing_test" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">run_routing_test</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Make a graph and exercise path tracing</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_routing_test</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Make a graph and exercise path tracing</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span> <span class="o">=</span> <span class="n">create_network</span><span class="p">()</span>
+
+    <span class="n">down_inter_ring_links</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number nodes: </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">graph</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number edges: </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">graph</span><span class="o">.</span><span class="n">number_of_edges</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">satellites</span><span class="p">(</span><span class="n">graph</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">orbit</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="s2">&quot;orbit&quot;</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">orbit</span><span class="p">)</span>
+        <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span> <span class="o">=</span> <span class="n">orbit</span><span class="o">.</span><span class="n">tle_format</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">()</span>
+
+    <span class="n">routes</span> <span class="o">=</span> <span class="n">generate_route_table</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">get_node_name</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">routes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;node: </span><span class="si">%s</span><span class="s2">, next: </span><span class="si">%s</span><span class="s2">, len: </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="n">route_tables</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;generate routes </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">node_name</span><span class="p">)</span>
+        <span class="n">route_tables</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">generate_route_table</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">node_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;len: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">route_tables</span><span class="p">[</span><span class="n">node_name</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">result</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">trace_path</span><span class="p">(</span><span class="n">get_node_name</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">get_node_name</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">route_tables</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="ow">and</span> <span class="n">trace_path</span><span class="p">(</span><span class="n">get_node_name</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">get_node_name</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">route_tables</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="ow">and</span> <span class="n">trace_path</span><span class="p">(</span><span class="n">get_node_name</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">get_node_name</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">route_tables</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">result</span> <span class="ow">and</span> <span class="n">trace_path</span><span class="p">(</span><span class="n">get_node_name</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">get_node_name</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">26</span><span class="p">),</span> <span class="n">route_tables</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.torus_topo.run_small_test" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">run_small_test</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Make a graph</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_small_test</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Make a graph</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span> <span class="o">=</span> <span class="n">create_network</span><span class="p">()</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.torus_topo.satellites" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">satellites</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return a list of all node names where the node is of type satellite</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">satellites</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">networkx</span><span class="o">.</span><span class="n">Graph</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Return a list of all node names where the node is of type satellite</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Consider converting to using yield</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">TYPE</span><span class="p">]</span> <span class="o">==</span> <span class="n">TYPE_SAT</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.torus_topo.trace_path" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">trace_path</span><span class="p">(</span><span class="n">start_node_name</span><span class="p">,</span> <span class="n">target_node_name</span><span class="p">,</span> <span class="n">route_tables</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Follow the routing tables to trace a path between the start and target node
+route_tables is a dictionary of routes for each source node</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/torus_topo.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">trace_path</span><span class="p">(</span><span class="n">start_node_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_node_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">route_tables</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">str</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Follow the routing tables to trace a path between the start and target node</span>
+<span class="sd">    route_tables is a dictionary of routes for each source node</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">unreachable_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trace node </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">start_node_name</span><span class="p">,</span> <span class="n">target_node_name</span><span class="p">))</span>
+    <span class="n">current_node_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">start_node_name</span>
+
+    <span class="c1"># Follow path until we reach the target or it is unreachable</span>
+    <span class="k">while</span> <span class="n">current_node_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">current_node_name</span> <span class="o">!=</span> <span class="n">target_node_name</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">route_tables</span><span class="p">[</span><span class="n">current_node_name</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">target_node_name</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">current_node_name</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;unreachable&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">route_tables</span><span class="p">[</span><span class="n">current_node_name</span><span class="p">][</span><span class="n">target_node_name</span><span class="p">]</span>
+            <span class="n">next_hop_name</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">next_hop_name</span><span class="p">)</span>
+            <span class="n">current_node_name</span> <span class="o">=</span> <span class="n">next_hop_name</span>
+    <span class="k">return</span> <span class="n">current_node_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+        <script src="../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
