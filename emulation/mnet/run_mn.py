@@ -31,6 +31,7 @@ import os
 from pathlib import Path
 import subprocess
 import time
+import threading
 
 from mininet.net import Mininet
 from mininet.log import setLogLevel, info
@@ -188,7 +189,6 @@ def setup_packet_capture(net, graph):
     else:
         print("\nWarning: Packet captures may not have started properly")
 
-
 def merge_captures():
     """
     Merge all individual capture files into one.
@@ -214,6 +214,13 @@ def merge_captures():
         for file in capture_files:
             os.unlink(file)
 
+
+def run_web_api(frrt):
+    '''
+    Launch the web API in a separate thread.
+    '''
+    print("Launching web API in a separate thread. Use /shutdown to halt.")
+    driver.run(frrt)
 
 
 def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground_stations: bool, enable_monitoring: bool = False):
@@ -256,18 +263,25 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
           f"ground_stations {ground_stations}, monitoring {'enabled' if enable_monitoring else 'disabled'}")
     
     # Open xterm for specific nodes
-    node_list = [net.get('G_PAO'), net.get('G_SYD'), net.get('R0_0')]  # Replace with your node names
-    for node in node_list:
-        makeTerm(node, title=f'Terminal for {node.name}')
-        print("Made Terminal for ", {node.name})
+    # node_list = [net.get('G_PAO'), net.get('G_SYD'), net.get('R0_0')]  # Replace with your node names
+    # for node in node_list:
+    #     makeTerm(node, title=f'Terminal for {node.name}')
+    #     print("Made Terminal for ", {node.name})
 
     if use_cli and net is not None:
+        # Launch the web interface in a separate thread
+        web_thread = threading.Thread(target=run_web_api, args=(frrt,))
+        web_thread.daemon = True
+        web_thread.start()
+
+        # Enter the CLI
         CLI(net)
+
+        # Ensure the web thread continues running after exiting the CLI
+        web_thread.join()
     else:
-        print("Launching web API. Use /shutdown to halt")
-        signal.signal(signal.SIGINT, signal_handler)
-        driver.run(frrt)
-    
+        run_web_api(frrt)
+
     # Cleanup before stopping
     if net is not None and enable_monitoring:
         print("Stopping packet capture...")
@@ -293,11 +307,6 @@ def usage():
     print("  --no-mnet    Disable Mininet")
     print("  --monitor    Enable traffic monitoring")
     print("<config_file>  Configuration file with network settings")
-
-
-
-
-
 
 if __name__ == "__main__":
     use_cli = False
