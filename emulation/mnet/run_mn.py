@@ -1,8 +1,29 @@
 #!/usr/bin/python3
 
-"""
+'''
 Run a mininet instance of FRR routers in a torus topology with namespace-aware traffic capture.
-"""
+
+Command-Line Options:
+    - `--cli`:
+        Enable CLI (Command Line Interface) mode.
+    - `--no-mnet`:
+        Disable Mininet simulation.
+    - `--monitor`:
+        Enable monitoring functionality.
+
+Configuration File:
+    An optional INI-style file defining the following sections:
+
+    [network]
+        - `rings` (int): Number of network rings (1-30). Default is 4.
+        - `routers` (int): Number of routers per ring (1-30). Default is 4.
+        - `ground_stations` (bool): Enable or disable ground stations. Default is False.
+
+    [monitor]
+        - `stable_monitors` (bool): Enable or disable stable monitors. Default is False.
+
+'''
+
 import configparser
 import signal
 import sys
@@ -272,6 +293,10 @@ def usage():
     print("  --no-mnet    Disable Mininet")
     print("  --monitor    Enable traffic monitoring")
     print("<config_file>  Configuration file with network settings")
+
+
+
+
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
-"""
+'''
 Create a torus network topology.
 
 This is a series of connected rings.
 Include test code to generate route maps and test connectivity.
-"""
+'''
 
 from dataclasses import dataclass
 from typing import ClassVar
@@ -46,9 +46,9 @@ def create_network(num_rings: int =NUM_RINGS, num_ring_nodes: int =NUM_RING_NODE
     return graph
 
 def ground_stations(graph: networkx.Graph) -> list[str]:
-    """
+    '''
     Return a list of all node names where the node is of type ground
-    """
+    '''
     # Consider converting to using yield
     result = []
     for name in graph.nodes:
@@ -58,9 +58,9 @@ def ground_stations(graph: networkx.Graph) -> list[str]:
 
 
 def satellites(graph: networkx.Graph) -> list[str]:
-    """
+    '''
     Return a list of all node names where the node is of type satellite
-    """
+    '''
     # Consider converting to using yield
     result = []
     for name in graph.nodes:
@@ -78,7 +78,9 @@ LINE2 = "2 {:05d} {:8.4f} {:8.4f} 0003572 297.6243 {:8.4f} 15.33600000 6847"
 
 @dataclass
 class OrbitData:
-    """Records key orbital information"""
+    '''
+    Records key orbital information
+    '''
 
     right_ascension: float  # degrees
     inclination: float  # degrees
@@ -200,11 +202,11 @@ def add_ground_stations(graph: networkx.Graph) -> None:
 #
 
 def down_inter_ring_links(graph: networkx.Graph, node_num_list: list[int], num_rings=NUM_RINGS):
-    """
+    '''
     Mark the inter-ring links down for the specified node numbers on all rings 
     to prevent use during a path trace. This causes many inter-ring links to be down to 
     test the routing functions.
-    """
+    '''
     # Set the specified links to down
     for node_num in node_num_list:
         for ring_num in range(num_rings):
@@ -215,12 +217,12 @@ def down_inter_ring_links(graph: networkx.Graph, node_num_list: list[int], num_r
 
 
 def generate_route_table(graph: networkx.Graph, node_name: str) -> dict[str,tuple[int,str]]:
-    """
+    '''
     Breadth first search to generate routes fromthe  start node to all other nodes.
     Routing table provides a next hop and a path length for all possible destinations.
 
     { "dest node" : ( path_len, "next hop" )}
-    """
+    '''
 
     routes = {}  # Dest: (hops, next hop node)
     for name, node in graph.nodes.items():
@@ -232,9 +234,9 @@ def generate_route_table(graph: networkx.Graph, node_name: str) -> dict[str,tupl
     graph.nodes[node_name]["visited"] = True
 
     def visit_node(graph: networkx.Graph, next_hop: str, path_len: int, visit_node_name: str) -> None:
-        """
+        '''
         Visit a node by adding all neighbors to the visit queue
-        """
+        '''
         # Neighbors already visted are added to the queue, we skip them here
         if graph.nodes[visit_node_name]["visited"]:
             return
@@ -263,10 +265,10 @@ def generate_route_table(graph: networkx.Graph, node_name: str) -> dict[str,tupl
 
 
 def trace_path(start_node_name: str, target_node_name: str, route_tables: dict[str,dict[str,tuple[int,str]]]) -> bool:
-    """
+    '''
     Follow the routing tables to trace a path between the start and target node
     route_tables is a dictionary of routes for each source node
-    """
+    '''
     unreachable_count: int = 0
     print("trace node %s to %s" % (start_node_name, target_node_name))
     current_node_name: str | None = start_node_name
@@ -285,16 +287,16 @@ def trace_path(start_node_name: str, target_node_name: str, route_tables: dict[s
 
 
 def run_small_test() -> bool:
-    """
+    '''
     Make a graph
-    """
+    '''
     graph: networkx.Graph = create_network()
     return True
 
 def run_routing_test() -> bool:
-    """
+    '''
     Make a graph and exercise path tracing
-    """
+    '''
     graph: networkx.Graph = create_network()
 
     down_inter_ring_links(graph, [0, 1, 2, 3, 4, 5, 20, 21, 22, 23, 24, 25])

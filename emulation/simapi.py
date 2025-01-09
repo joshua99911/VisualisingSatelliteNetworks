@@ -1,9 +1,9 @@
-"""
+'''
 Definitions for elements of the Simulator API
 
 The server side of the API is implemented in mnet/driver.py
 The client side is implemented in mnet/client.py
-"""
+'''
 
 from pydantic import BaseModel
 

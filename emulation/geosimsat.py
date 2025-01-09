@@ -1,4 +1,4 @@
-"""
+'''
 Geographic Satellite Simulator
 Simulate location changes in a satellite network in real time.
 
@@ -8,7 +8,7 @@ Generate events for:
     - horizontal links down above and below a critical latitude
     - new / break  connections to ground stations
     - new / break connections to end hosts
-"""
+'''
 
 from dataclasses import dataclass, field
 import configparser
@@ -30,7 +30,9 @@ from skyfield.units import Angle, Distance # type: ignore
 
 @dataclass
 class Satellite:
-    """Represents an instance of a satellite"""
+    '''
+    Represents an instance of a satellite
+    '''
 
     name: str
     earth_sat: EarthSatellite
@@ -43,23 +45,23 @@ class Satellite:
 
 @dataclass
 class Uplink:
-    """Represents a link between the ground and a satellite"""
+    '''Represents a link between the ground and a satellite'''
     satellite_name: str
     ground_name: str
     distance: int
 
 @dataclass
 class GroundStation:
-    """Represents an instance of a ground station"""
+    '''Represents an instance of a ground station'''
     name: str
     position: GeographicPosition
     uplinks: list[Uplink] = field(default_factory=list)
 
 
 class SatSimulation:
-    """
+    '''
     Runs real time to update satellite positions
-    """
+    '''
 
     # Time slice for simulation
     TIME_SLICE = 10
@@ -166,9 +168,9 @@ class SatSimulation:
                 satellite.lat.degrees < ground_station.position.latitude.degrees + 20)
  
     def updateUplinkStatus(self, future_time: datetime.datetime):
-        """
+        '''
         Update the links between ground stations and satellites
-        """
+        '''
         self.uplink_updates += 1
         zero_uplinks: bool = False
 
@@ -248,7 +250,7 @@ class SatSimulation:
 
 
 def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, calc_only: bool) -> None:
-    """
+    '''
     Simulate physical positions of satellites.
 
     num_rings: number of orbital rings
@@ -256,7 +258,7 @@ def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, c
     ground_stations: True if groundstations are included
     min_alt: Minimum angle (degrees) above horizon needed to connect to the satellite
     calc_only: If True, only loop quicky dumping results to the screen
-    """
+    '''
     graph = torus_topo.create_network(num_rings, num_routers, ground_stations)
     sim: SatSimulation = SatSimulation(graph)
     sim.min_altitude = min_alt
