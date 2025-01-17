@@ -158,6 +158,14 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.run_mn.run" class="nav-link">run</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.run_mn.run_web_api" class="nav-link">run_web_api</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
             <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.run_mn.setup_packet_capture" class="nav-link">setup_packet_capture</a>
               <ul class="nav flex-column">
               </ul>
@@ -240,15 +248,15 @@
 
             <details class="quote">
               <summary>Source code in <code>emulation/mnet/run_mn.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">112</span>
-<span class="normal">113</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">113</span>
 <span class="normal">114</span>
 <span class="normal">115</span>
 <span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
 <span class="normal">119</span>
-<span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">cleanup_dns</span><span class="p">(</span><span class="n">net</span><span class="p">):</span>
+<span class="normal">120</span>
+<span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">cleanup_dns</span><span class="p">(</span><span class="n">net</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clean up DNS configuration when the network is stopped.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -279,8 +287,7 @@ in each node's namespace. Include interface IPs with descriptive names.</p>
 
             <details class="quote">
               <summary>Source code in <code>emulation/mnet/run_mn.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 46</span>
-<span class="normal"> 47</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 47</span>
 <span class="normal"> 48</span>
 <span class="normal"> 49</span>
 <span class="normal"> 50</span>
@@ -343,7 +350,8 @@ in each node's namespace. Include interface IPs with descriptive names.</p>
 <span class="normal">107</span>
 <span class="normal">108</span>
 <span class="normal">109</span>
-<span class="normal">110</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">configure_dns</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">graph</span><span class="p">):</span>
+<span class="normal">110</span>
+<span class="normal">111</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">configure_dns</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">graph</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Configure DNS for all nodes in the network by updating /etc/hosts</span>
 <span class="sd">    in each node&#39;s namespace. Include interface IPs with descriptive names.</span>
@@ -453,9 +461,9 @@ in each node's namespace. Include interface IPs with descriptive names.</p>
 <span class="normal">213</span>
 <span class="normal">214</span>
 <span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">merge_captures</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Merge all individual capture files into one.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">capture_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;mininet_captures&quot;</span>
     <span class="n">temp_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;/tmp&#39;</span><span class="p">)</span>
     <span class="n">output_file</span> <span class="o">=</span> <span class="n">capture_dir</span> <span class="o">/</span> <span class="s2">&quot;torus_network.pcap&quot;</span>
@@ -485,6 +493,377 @@ in each node's namespace. Include interface IPs with descriptive names.</p>
 <div class="doc doc-object doc-function">
 
 
+<h2 id="emulation.mnet.run_mn.run" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">run</span><span class="p">(</span><span class="n">num_rings</span><span class="p">,</span> <span class="n">num_routers</span><span class="p">,</span> <span class="n">use_cli</span><span class="p">,</span> <span class="n">use_mnet</span><span class="p">,</span> <span class="n">stable_monitors</span><span class="p">,</span> <span class="n">ground_stations</span><span class="p">,</span> <span class="n">enable_monitoring</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Execute the simulation of an FRR router network in a torus topology using Mininet.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_rings</code>
+            </td>
+            <td>
+                  <code>int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of network rings to create (1-30).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>num_routers</code>
+            </td>
+            <td>
+                  <code>int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of routers per ring (1-30).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>use_cli</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, enable the Mininet Command Line Interface (CLI).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>use_mnet</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, enable the Mininet simulation.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stable_monitors</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to enable stable monitoring configurations.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ground_stations</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, include ground stations in the topology.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>enable_monitoring</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to enable traffic monitoring. Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+        <p>This function creates a torus topology based on the specified parameters, configures DNS and
+monitoring (if enabled), and starts the simulation. If the CLI is enabled, it allows interactive
+control of the network. After the simulation, it cleans up the DNS configuration and stops the
+network.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/run_mn.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">num_rings</span><span class="p">,</span> <span class="n">num_routers</span><span class="p">,</span> <span class="n">use_cli</span><span class="p">,</span> <span class="n">use_mnet</span><span class="p">,</span> <span class="n">stable_monitors</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">ground_stations</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">enable_monitoring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Execute the simulation of an FRR router network in a torus topology using Mininet.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        num_rings (int): Number of network rings to create (1-30).</span>
+<span class="sd">        num_routers (int): Number of routers per ring (1-30).</span>
+<span class="sd">        use_cli (bool): If True, enable the Mininet Command Line Interface (CLI).</span>
+<span class="sd">        use_mnet (bool): If True, enable the Mininet simulation.</span>
+<span class="sd">        stable_monitors (bool): Whether to enable stable monitoring configurations.</span>
+<span class="sd">        ground_stations (bool): If True, include ground stations in the topology.</span>
+<span class="sd">        enable_monitoring (bool, optional): Whether to enable traffic monitoring. Defaults to False.</span>
+
+<span class="sd">    This function creates a torus topology based on the specified parameters, configures DNS and</span>
+<span class="sd">    monitoring (if enabled), and starts the simulation. If the CLI is enabled, it allows interactive</span>
+<span class="sd">    control of the network. After the simulation, it cleans up the DNS configuration and stops the</span>
+<span class="sd">    network.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># Create a networkx graph annotated with FRR configs</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">torus_topo</span><span class="o">.</span><span class="n">create_network</span><span class="p">(</span><span class="n">num_rings</span><span class="p">,</span> <span class="n">num_routers</span><span class="p">,</span> <span class="n">ground_stations</span><span class="p">)</span>
+    <span class="n">frr_config_topo</span><span class="o">.</span><span class="n">annotate_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+    <span class="n">frr_config_topo</span><span class="o">.</span><span class="n">dump_graph</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+
+    <span class="c1"># Use the networkx graph to build a mininet topology</span>
+    <span class="n">topo</span> <span class="o">=</span> <span class="n">frr_topo</span><span class="o">.</span><span class="n">NetxTopo</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;generated topo&quot;</span><span class="p">)</span>
+
+    <span class="n">net</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">use_mnet</span><span class="p">:</span>
+        <span class="c1"># Backup original DNS files</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/etc/hosts&#39;</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;cp /etc/hosts /etc/hosts.mininet.bak&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/etc/resolv.conf&#39;</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;cp /etc/resolv.conf /etc/resolv.conf.mininet.bak&#39;</span><span class="p">)</span>
+
+        <span class="n">net</span> <span class="o">=</span> <span class="n">Mininet</span><span class="p">(</span><span class="n">topo</span><span class="o">=</span><span class="n">topo</span><span class="p">)</span>
+        <span class="n">net</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="c1"># Configure DNS after network starts but before monitoring</span>
+        <span class="n">configure_dns</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">graph</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;configured DNS&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Set up packet capture if monitoring is enabled</span>
+        <span class="k">if</span> <span class="n">enable_monitoring</span><span class="p">:</span>
+            <span class="c1"># Wait a moment for interfaces to be ready</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">setup_packet_capture</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">graph</span><span class="p">)</span>
+
+    <span class="n">frrt</span> <span class="o">=</span> <span class="n">frr_topo</span><span class="o">.</span><span class="n">FrrSimRuntime</span><span class="p">(</span><span class="n">topo</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">stable_monitors</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;created runtime&quot;</span><span class="p">)</span>
+
+    <span class="n">frrt</span><span class="o">.</span><span class="n">start_routers</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">****Running </span><span class="si">{</span><span class="n">num_rings</span><span class="si">}</span><span class="s2"> rings with </span><span class="si">{</span><span class="n">num_routers</span><span class="si">}</span><span class="s2"> per ring, stable monitors </span><span class="si">{</span><span class="n">stable_monitors</span><span class="si">}</span><span class="s2">, &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;ground_stations </span><span class="si">{</span><span class="n">ground_stations</span><span class="si">}</span><span class="s2">, monitoring </span><span class="si">{</span><span class="s1">&#39;enabled&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">enable_monitoring</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;disabled&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Open xterm for specific nodes</span>
+    <span class="c1"># node_list = [net.get(&#39;G_PAO&#39;), net.get(&#39;G_SYD&#39;), net.get(&#39;R0_0&#39;)]  # Replace with your node names</span>
+    <span class="c1"># for node in node_list:</span>
+    <span class="c1">#     makeTerm(node, title=f&#39;Terminal for {node.name}&#39;)</span>
+    <span class="c1">#     print(&quot;Made Terminal for &quot;, {node.name})</span>
+
+    <span class="k">if</span> <span class="n">use_cli</span> <span class="ow">and</span> <span class="n">net</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Launch the web interface in a separate thread</span>
+        <span class="n">web_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">run_web_api</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">frrt</span><span class="p">,))</span>
+        <span class="n">web_thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">web_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="c1"># Enter the CLI</span>
+        <span class="n">CLI</span><span class="p">(</span><span class="n">net</span><span class="p">)</span>
+
+        <span class="c1"># Ensure the web thread continues running after exiting the CLI</span>
+        <span class="n">web_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">run_web_api</span><span class="p">(</span><span class="n">frrt</span><span class="p">)</span>
+
+    <span class="c1"># Cleanup before stopping</span>
+    <span class="k">if</span> <span class="n">net</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">enable_monitoring</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping packet capture...&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;pkill -f tcpdump&#39;</span><span class="p">)</span>
+        <span class="n">merge_captures</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">net</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cleanup_dns</span><span class="p">(</span><span class="n">net</span><span class="p">)</span>
+        <span class="n">net</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+    <span class="c1"># Restore original DNS files</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/etc/hosts.mininet.bak&#39;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;cp /etc/hosts.mininet.bak /etc/hosts&#39;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;rm /etc/hosts.mininet.bak&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/etc/resolv.conf.mininet.bak&#39;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;cp /etc/resolv.conf.mininet.bak /etc/resolv.conf&#39;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;rm /etc/resolv.conf.mininet.bak&#39;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.run_mn.run_web_api" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">run_web_api</span><span class="p">(</span><span class="n">frrt</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Launch the web API in a separate thread.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/run_mn.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_web_api</span><span class="p">(</span><span class="n">frrt</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Launch the web API in a separate thread.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Launching web API in a separate thread. Use /shutdown to halt.&quot;</span><span class="p">)</span>
+    <span class="n">driver</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">frrt</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h2 id="emulation.mnet.run_mn.setup_packet_capture" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">setup_packet_capture</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">graph</span><span class="p">)</span></code>
 
@@ -497,8 +876,7 @@ in each node's namespace. Include interface IPs with descriptive names.</p>
 
             <details class="quote">
               <summary>Source code in <code>emulation/mnet/run_mn.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">139</span>
-<span class="normal">140</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">140</span>
 <span class="normal">141</span>
 <span class="normal">142</span>
 <span class="normal">143</span>
@@ -547,7 +925,8 @@ in each node's namespace. Include interface IPs with descriptive names.</p>
 <span class="normal">186</span>
 <span class="normal">187</span>
 <span class="normal">188</span>
-<span class="normal">189</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">setup_packet_capture</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">graph</span><span class="p">):</span>
+<span class="normal">189</span>
+<span class="normal">190</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">setup_packet_capture</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="n">graph</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set up packet capture within each router&#39;s network namespace.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -619,8 +998,7 @@ in each node's namespace. Include interface IPs with descriptive names.</p>
 
             <details class="quote">
               <summary>Source code in <code>emulation/mnet/run_mn.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">122</span>
-<span class="normal">123</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span>
 <span class="normal">126</span>
@@ -633,7 +1011,8 @@ in each node's namespace. Include interface IPs with descriptive names.</p>
 <span class="normal">133</span>
 <span class="normal">134</span>
 <span class="normal">135</span>
-<span class="normal">136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">signal_handler</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
+<span class="normal">136</span>
+<span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">signal_handler</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Make a ^C start a clean shutdown. Needed to stop all of the FRR processes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>

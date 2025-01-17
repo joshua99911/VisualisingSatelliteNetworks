@@ -146,6 +146,58 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.can_run" class="nav-link">can_run</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.create_db" class="nav-link">create_db</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.get_last_five" class="nav-link">get_last_five</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.get_status_count" class="nav-link">get_status_count</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.get_status_list" class="nav-link">get_status_list</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.init_targets" class="nav-link">init_targets</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.is_running" class="nav-link">is_running</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.monitor_targets" class="nav-link">monitor_targets</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.open_db" class="nav-link">open_db</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.sample_target" class="nav-link">sample_target</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.set_can_run" class="nav-link">set_can_run</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.set_running" class="nav-link">set_running</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#emulation.mnet.pmonitor.test" class="nav-link">test</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
         </ul>
@@ -163,6 +215,38 @@
 <a id="emulation.mnet.pmonitor"></a>
     <div class="doc doc-contents first">
 
+        <p>This script manages and monitors network targets using SQLite databases to track their status. 
+It includes functionality to sample targets, log responses, and manage monitoring processes 
+across multiple nodes. Designed for testing and production, the script supports running in 
+test mode or as a monitoring process.</p>
+
+
+<details class="main-features" open>
+  <summary>Main Features</summary>
+  <ul>
+<li>SQLite-based tracking of network targets.</li>
+<li>Sampling network targets using <code>ping</code>.</li>
+<li>Rotating target sampling to distribute load across nodes.</li>
+<li>Monitoring status and logging responses.</li>
+</ul>
+</details>
+
+<details class="usage" open>
+  <summary>Usage</summary>
+  <p>python script_name.py test
+    Runs the script in test mode with predefined data.</p>
+<p>python script_name.py monitor <master_db> <working_db> <src_address>
+    Monitors targets listed in the master database and logs results in the working database.</p>
+</details>
+
+<details class="dependencies" open>
+  <summary>Dependencies</summary>
+  <ul>
+<li>SQLite</li>
+<li>Mininet</li>
+<li>Logging</li>
+</ul>
+</details>
 
 
 
@@ -179,6 +263,1773 @@
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.can_run" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">can_run</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Check if a target can be sampled based on the database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db</code>
+            </td>
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Database connection.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>address</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Address of the target.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>bool</code></td>            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>True if the target can be sampled, False otherwise.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">can_run</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Check if a target can be sampled based on the database.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db (sqlite3.Connection): Database connection.</span>
+<span class="sd">    address (str): Address of the target.</span>
+
+<span class="sd">Returns:</span>
+<span class="sd">    bool: True if the target can be sampled, False otherwise.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT run FROM targets WHERE address = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">address</span><span class="p">,))</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.create_db" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">create_db</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create a new SQLite database and initialize it with the schema.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>file_path</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path where the SQLite database will be created.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>IOError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the schema file cannot be read.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">create_db</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Create a new SQLite database and initialize it with the schema.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    file_path (str): Path where the SQLite database will be created.</span>
+
+<span class="sd">Raises:</span>
+<span class="sd">    IOError: If the schema file cannot be read.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">data_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">data_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;schema.sql&quot;</span><span class="p">)</span>
+    <span class="n">db</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.get_last_five" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_last_five</span><span class="p">(</span><span class="n">db</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the last five targets sampled, along with their response status.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db</code>
+            </td>
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Database connection.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>list[tuple[str, bool]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>list[tuple[str, bool]]: List of tuples with target names and response status.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_last_five</span><span class="p">(</span><span class="n">db</span><span class="p">)</span> <span class="o">-&gt;</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">bool</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Get the last five targets sampled, along with their response status.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db (sqlite3.Connection): Database connection.</span>
+
+<span class="sd">Returns:</span>
+<span class="sd">    list[tuple[str, bool]]: List of tuples with target names and response status.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT name, responded FROM targets ORDER BY sample_time DESC LIMIT 5&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">responded</span> <span class="ow">in</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchall</span><span class="p">():</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">responded</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.get_status_count" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_status_count</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">stable</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve the count of responding and total targets.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db</code>
+            </td>
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Database connection.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stable</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, filter by stable targets only.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="typing.Tuple">Tuple</span>[int, int]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>tuple[int, int]: A tuple containing the count of responding targets and total targets.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_status_count</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">stable</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Retrieve the count of responding and total targets.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db (sqlite3.Connection): Database connection.</span>
+<span class="sd">    stable (bool): If True, filter by stable targets only.</span>
+
+<span class="sd">Returns:</span>
+<span class="sd">    tuple[int, int]: A tuple containing the count of responding targets and total targets.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="c1"># May sample only stable node connections or all</span>
+    <span class="k">if</span> <span class="n">stable</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM targets WHERE stable = TRUE AND responded = TRUE&quot;</span><span class="p">)</span>
+        <span class="n">good_targets</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM targets WHERE stable = TRUE AND total_count &gt; 0&quot;</span><span class="p">)</span>
+        <span class="n">total_targets</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM targets WHERE responded = TRUE&quot;</span><span class="p">)</span>
+        <span class="n">good_targets</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM targets WHERE total_count &gt; 0&quot;</span><span class="p">)</span>
+        <span class="n">total_targets</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">good_targets</span><span class="p">,</span> <span class="n">total_targets</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.get_status_list" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_status_list</span><span class="p">(</span><span class="n">db</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the response status of all targets that have been sampled at least once.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db</code>
+            </td>
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Database connection.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>dict[str, bool]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>dict[str, bool]: A dictionary mapping target names to their response status.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_status_list</span><span class="p">(</span><span class="n">db</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Get the response status of all targets that have been sampled at least once.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db (sqlite3.Connection): Database connection.</span>
+
+<span class="sd">Returns:</span>
+<span class="sd">    dict[str, bool]: A dictionary mapping target names to their response status.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT name, responded FROM targets WHERE total_count &gt; 0&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchall</span><span class="p">():</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.init_targets" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">init_targets</span><span class="p">(</span><span class="n">db_file_path</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize the targets table in the database with the provided data.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db_file_path</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the SQLite database file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data</code>
+            </td>
+            <td>
+                  <code>list[tuple[str, str, bool]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of target tuples (name, address, stable).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="creates" open>
+  <summary>Creates</summary>
+  <ul>
+<li>A clean database with the specified target entries.</li>
+</ul>
+</details>
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">init_targets</span><span class="p">(</span><span class="n">db_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">str</span><span class="p">,</span><span class="nb">bool</span><span class="p">]]):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Initialize the targets table in the database with the provided data.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db_file_path (str): Path to the SQLite database file.</span>
+<span class="sd">    data (list[tuple[str, str, bool]]): List of target tuples (name, address, stable).</span>
+
+<span class="sd">Creates:</span>
+<span class="sd">    - A clean database with the specified target entries.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">create_db</span><span class="p">(</span><span class="n">db_file_path</span><span class="p">)</span>
+
+    <span class="n">db</span> <span class="o">=</span> <span class="n">open_db</span><span class="p">(</span><span class="n">db_file_path</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM targets&quot;</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">address</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">stable</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;INSERT INTO targets (name, address, stable) VALUES (?, ?, ?)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">stable</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.is_running" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">is_running</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Check if a target is marked as running in the database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db</code>
+            </td>
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Database connection.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>address</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Address of the target.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>bool</code></td>            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>True if the target is running, False otherwise.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">is_running</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Check if a target is marked as running in the database.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db (sqlite3.Connection): Database connection.</span>
+<span class="sd">    address (str): Address of the target.</span>
+
+<span class="sd">Returns:</span>
+<span class="sd">    bool: True if the target is running, False otherwise.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT running FROM targets WHERE address = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">address</span><span class="p">,))</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">entry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.monitor_targets" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">monitor_targets</span><span class="p">(</span><span class="n">db_path_master</span><span class="p">,</span> <span class="n">db_path_local</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Monitor targets listed in the master database and log results in the local database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db_path_master</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the master database file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>db_path_local</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the local database file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>address</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Address of the current monitoring node.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Exception</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the monitoring process encounters an error.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">monitor_targets</span><span class="p">(</span><span class="n">db_path_master</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">db_path_local</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Monitor targets listed in the master database and log results in the local database.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db_path_master (str): Path to the master database file.</span>
+<span class="sd">    db_path_local (str): Path to the local database file.</span>
+<span class="sd">    address (str): Address of the current monitoring node.</span>
+
+<span class="sd">Raises:</span>
+<span class="sd">    Exception: If the monitoring process encounters an error.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Monitoring targets from </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">db_path_local</span><span class="p">)</span>
+    <span class="n">create_db</span><span class="p">(</span><span class="n">db_path_local</span><span class="p">)</span>
+    <span class="n">db_master</span> <span class="o">=</span> <span class="n">open_db</span><span class="p">(</span><span class="n">db_path_master</span><span class="p">)</span>
+    <span class="n">db_local</span> <span class="o">=</span> <span class="n">open_db</span><span class="p">(</span><span class="n">db_path_local</span><span class="p">)</span>
+
+    <span class="c1"># Make an entry for the current monitoring process</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db_master</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT name, stable FROM targets WHERE address = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">address</span><span class="p">,))</span>
+    <span class="n">name</span><span class="p">,</span> <span class="n">stable</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db_local</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO targets (name, address, stable, me) VALUES (?, ?, ?, TRUE)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">address</span><span class="p">,</span><span class="n">stable</span><span class="p">))</span>
+    <span class="n">db_local</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="n">running</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">while</span> <span class="n">running</span><span class="p">:</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;reload target list&quot;</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">db_master</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT name, address, stable FROM targets&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchall</span><span class="p">():</span>
+            <span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+        <span class="n">index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">address</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Rotate list so all elements are sampling different targets</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+            <span class="n">tmp</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">targets</span><span class="p">[:</span><span class="n">index</span><span class="p">])</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="n">tmp</span>
+
+        <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">TEST</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+            <span class="n">running</span> <span class="o">=</span> <span class="n">can_run</span><span class="p">(</span><span class="n">db_master</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">running</span><span class="p">:</span>
+                <span class="n">sample_target</span><span class="p">(</span><span class="n">db_local</span><span class="p">,</span> <span class="n">target</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">target</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">target</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">address</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">TEST</span><span class="p">:</span>
+            <span class="n">set_can_run</span><span class="p">(</span><span class="n">db_master</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">running</span> <span class="o">=</span> <span class="n">can_run</span><span class="p">(</span><span class="n">db_master</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.open_db" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">open_db</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Open a connection to an SQLite database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>file_path</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the SQLite database file.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>sqlite3.Connection: A connection object to interact with the database.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">open_db</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Connection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Open a connection to an SQLite database.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    file_path (str): Path to the SQLite database file.</span>
+
+<span class="sd">Returns:</span>
+<span class="sd">    sqlite3.Connection: A connection object to interact with the database.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">db</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">db</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.sample_target" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">sample_target</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">stable</span><span class="p">,</span> <span class="n">src_address</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Sample a target by sending a ping and update the database with the results.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db</code>
+            </td>
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Database connection.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the target.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>address</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>IP address of the target.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>stable</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the target is stable.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>src_address</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Source IP address to use for the ping.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="logs" open>
+  <summary>Logs</summary>
+  <ul>
+<li>Ping results and process output.</li>
+<li>Database updates for target status.</li>
+</ul>
+</details>
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">sample_target</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stable</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">src_address</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Sample a target by sending a ping and update the database with the results.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db (sqlite3.Connection): Database connection.</span>
+<span class="sd">    name (str): Name of the target.</span>
+<span class="sd">    address (str): IP address of the target.</span>
+<span class="sd">    stable (bool): Whether the target is stable.</span>
+<span class="sd">    src_address (str): Source IP address to use for the ping.</span>
+
+<span class="sd">Logs:</span>
+<span class="sd">    - Ping results and process output.</span>
+<span class="sd">    - Database updates for target status.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;sample target: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
+    <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">&quot;ping&quot;</span><span class="p">,</span> <span class="s2">&quot;-I&quot;</span><span class="p">,</span> <span class="n">src_address</span><span class="p">,</span> <span class="s2">&quot;-c1&quot;</span><span class="p">,</span> <span class="s2">&quot;-W3&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">address</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+    <span class="n">sent</span><span class="p">,</span> <span class="n">received</span> <span class="o">=</span> <span class="n">mininet</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">Mininet</span><span class="o">.</span><span class="n">_parsePing</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">sent</span> <span class="o">==</span> <span class="n">received</span>
+
+    <span class="n">prev_responded</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT responded FROM targets WHERE address = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">address</span><span class="p">,))</span>
+    <span class="n">qr</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO targets (name, address, sample_time, stable) VALUES (?, ?, ?, ?)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">now</span><span class="p">,</span> <span class="n">stable</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">prev_responded</span> <span class="o">=</span> <span class="n">qr</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;UPDATE targets SET responded = TRUE, &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;sample_time = ?,&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;total_count = total_count + 1, &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;total_success = total_success + 1 &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;WHERE address = ?&quot;</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="n">now</span><span class="p">,</span>
+                <span class="n">address</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">prev_responded</span><span class="p">:</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;UPDATE targets SET responded = FALSE, &quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;sample_time = ?,&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;total_count = total_count + 1 WHERE address = ?&quot;</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="n">now</span><span class="p">,</span>
+                <span class="n">address</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.set_can_run" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">set_can_run</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">can_run</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Update the 'can_run' status of a target in the database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db</code>
+            </td>
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Database connection.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>address</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Address of the target.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>can_run</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>New value for the 'can_run' status.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">set_can_run</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">can_run</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Update the &#39;can_run&#39; status of a target in the database.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db (sqlite3.Connection): Database connection.</span>
+<span class="sd">    address (str): Address of the target.</span>
+<span class="sd">    can_run (bool): New value for the &#39;can_run&#39; status.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;UPDATE targets SET run = ? WHERE address = ?&quot;</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="n">can_run</span><span class="p">,</span>
+            <span class="n">address</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.set_running" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">set_running</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">running</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Update the running status of a target in the database.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>db</code>
+            </td>
+            <td>
+                  <code><span title="sqlite3.Connection">Connection</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Database connection.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>address</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Address of the target.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>running</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Running status to set (True or False).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">set_running</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">address</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">running</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Update the running status of a target in the database.</span>
+
+<span class="sd">Args:</span>
+<span class="sd">    db (sqlite3.Connection): Database connection.</span>
+<span class="sd">    address (str): Address of the target.</span>
+<span class="sd">    running (bool): Running status to set (True or False).</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;UPDATE targets SET running = ? WHERE address = ?&quot;</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="n">running</span><span class="p">,</span>
+            <span class="n">address</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="emulation.mnet.pmonitor.test" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">test</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Run the script in test mode with predefined target data.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>bool</code></td>            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>True when the test completes successfully.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="logs" open>
+  <summary>Logs</summary>
+  <ul>
+<li>Initialization of the test databases.</li>
+<li>Sampling of test targets and their statuses.</li>
+<li>Results of the test.</li>
+</ul>
+</details>
+            <details class="quote">
+              <summary>Source code in <code>emulation/mnet/pmonitor.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">test</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Run the script in test mode with predefined target data.</span>
+
+<span class="sd">Returns:</span>
+<span class="sd">    bool: True when the test completes successfully.</span>
+
+<span class="sd">Logs:</span>
+<span class="sd">    - Initialization of the test databases.</span>
+<span class="sd">    - Sampling of test targets and their statuses.</span>
+<span class="sd">    - Results of the test.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;host1&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.33.1&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;host2&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.44.2&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;host3&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.55.2&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;host3&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.55.3&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">db_master</span> <span class="o">=</span> <span class="s2">&quot;master.sqlite&quot;</span>
+    <span class="n">db_working</span> <span class="o">=</span> <span class="s2">&quot;work.sqlite&quot;</span>
+
+    <span class="n">init_targets</span><span class="p">(</span><span class="n">db_master</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">global</span> <span class="n">TEST</span>
+    <span class="n">TEST</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">set_running</span><span class="p">(</span><span class="n">open_db</span><span class="p">(</span><span class="n">db_master</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">monitor_targets</span><span class="p">(</span><span class="n">db_master</span><span class="p">,</span> <span class="n">db_working</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">monitor_targets</span><span class="p">(</span><span class="n">db_master</span><span class="p">,</span> <span class="n">db_working</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">good</span><span class="p">,</span> <span class="n">total</span> <span class="o">=</span> <span class="n">get_status_count</span><span class="p">(</span><span class="n">open_db</span><span class="p">(</span><span class="n">db_working</span><span class="p">))</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">get_status_list</span><span class="p">(</span><span class="n">open_db</span><span class="p">(</span><span class="n">db_working</span><span class="p">))</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">get_last_five</span><span class="p">(</span><span class="n">open_db</span><span class="p">(</span><span class="n">db_working</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;status </span><span class="si">{</span><span class="n">good</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
 
 
 
