@@ -190,9 +190,9 @@ def setup_packet_capture(net, graph):
         print("\nWarning: Packet captures may not have started properly")
 
 def merge_captures():
-    """
+    '''
     Merge all individual capture files into one.
-    """
+    '''
     capture_dir = Path.cwd() / "mininet_captures"
     temp_dir = Path('/tmp')
     output_file = capture_dir / "torus_network.pcap"
@@ -224,6 +224,24 @@ def run_web_api(frrt):
 
 
 def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground_stations: bool, enable_monitoring: bool = False):
+    '''
+    Execute the simulation of an FRR router network in a torus topology using Mininet.
+
+    Args:
+        num_rings (int): Number of network rings to create (1-30).
+        num_routers (int): Number of routers per ring (1-30).
+        use_cli (bool): If True, enable the Mininet Command Line Interface (CLI).
+        use_mnet (bool): If True, enable the Mininet simulation.
+        stable_monitors (bool): Whether to enable stable monitoring configurations.
+        ground_stations (bool): If True, include ground stations in the topology.
+        enable_monitoring (bool, optional): Whether to enable traffic monitoring. Defaults to False.
+
+    This function creates a torus topology based on the specified parameters, configures DNS and
+    monitoring (if enabled), and starts the simulation. If the CLI is enabled, it allows interactive
+    control of the network. After the simulation, it cleans up the DNS configuration and stops the
+    network.
+    '''
+
     # Create a networkx graph annotated with FRR configs
     graph = torus_topo.create_network(num_rings, num_routers, ground_stations)
     frr_config_topo.annotate_graph(graph)

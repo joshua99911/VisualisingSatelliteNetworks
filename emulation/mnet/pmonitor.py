@@ -1,3 +1,28 @@
+'''
+This script manages and monitors network targets using SQLite databases to track their status. 
+It includes functionality to sample targets, log responses, and manage monitoring processes 
+across multiple nodes. Designed for testing and production, the script supports running in 
+test mode or as a monitoring process.
+
+Main Features:
+    - SQLite-based tracking of network targets.
+    - Sampling network targets using `ping`.
+    - Rotating target sampling to distribute load across nodes.
+    - Monitoring status and logging responses.
+
+Usage:
+    python script_name.py test
+        Runs the script in test mode with predefined data.
+
+    python script_name.py monitor <master_db> <working_db> <src_address>
+        Monitors targets listed in the master database and logs results in the working database.
+
+Dependencies:
+    - SQLite
+    - Mininet
+    - Logging
+'''
+from typing import Tuple
 import os
 import sys
 import sqlite3
@@ -8,12 +33,32 @@ import mininet.net
 import logging
 
 
-def open_db(file_path: str):
+def open_db(file_path: str) -> sqlite3.Connection:
+    '''
+Open a connection to an SQLite database.
+
+Args:
+    file_path (str): Path to the SQLite database file.
+
+Returns:
+    sqlite3.Connection: A connection object to interact with the database.
+'''
+    
     db = sqlite3.connect(file_path)
     return db
 
 
 def create_db(file_path: str):
+    '''
+Create a new SQLite database and initialize it with the schema.
+
+Args:
+    file_path (str): Path where the SQLite database will be created.
+
+Raises:
+    IOError: If the schema file cannot be read.
+'''
+
     data_dir = os.path.dirname(file_path)
     if len(data_dir) > 0 and not os.path.exists(data_dir):
         os.makedirs(data_dir)
@@ -26,6 +71,17 @@ def create_db(file_path: str):
 
 
 def is_running(db, address: str) -> bool:
+    '''
+Check if a target is marked as running in the database.
+
+Args:
+    db (sqlite3.Connection): Database connection.
+    address (str): Address of the target.
+
+Returns:
+    bool: True if the target is running, False otherwise.
+'''
+
     c = db.cursor()
     q = c.execute("SELECT running FROM targets WHERE address = ?", (address,))
     entry = q.fetchone()
@@ -33,6 +89,15 @@ def is_running(db, address: str) -> bool:
 
 
 def set_running(db, address: str, running: bool):
+    '''
+Update the running status of a target in the database.
+
+Args:
+    db (sqlite3.Connection): Database connection.
+    address (str): Address of the target.
+    running (bool): Running status to set (True or False).
+'''
+
     c = db.cursor()
     q = c.execute(
         "UPDATE targets SET running = ? WHERE address = ?",
@@ -45,6 +110,17 @@ def set_running(db, address: str, running: bool):
 
 
 def can_run(db, address: str) -> bool:
+    '''
+Check if a target can be sampled based on the database.
+
+Args:
+    db (sqlite3.Connection): Database connection.
+    address (str): Address of the target.
+
+Returns:
+    bool: True if the target can be sampled, False otherwise.
+'''
+
     c = db.cursor()
     q = c.execute("SELECT run FROM targets WHERE address = ?", (address,))
     entry = q.fetchone()
@@ -52,6 +128,15 @@ def can_run(db, address: str) -> bool:
 
 
 def set_can_run(db, address: str, can_run):
+    '''
+Update the 'can_run' status of a target in the database.
+
+Args:
+    db (sqlite3.Connection): Database connection.
+    address (str): Address of the target.
+    can_run (bool): New value for the 'can_run' status.
+'''
+
     c = db.cursor()
     q = c.execute(
         "UPDATE targets SET run = ? WHERE address = ?",
@@ -63,7 +148,18 @@ def set_can_run(db, address: str, can_run):
     db.commit()
 
 
-def get_status_count(db, stable: bool):
+def get_status_count(db, stable: bool) -> Tuple[int, int]:
+    '''
+Retrieve the count of responding and total targets.
+
+Args:
+    db (sqlite3.Connection): Database connection.
+    stable (bool): If True, filter by stable targets only.
+
+Returns:
+    tuple[int, int]: A tuple containing the count of responding targets and total targets.
+'''
+
     c = db.cursor()
     # May sample only stable node connections or all
     if stable:
@@ -80,6 +176,16 @@ def get_status_count(db, stable: bool):
     return good_targets, total_targets
 
 def get_last_five(db) ->list[tuple[str,bool]]:
+    '''
+Get the last five targets sampled, along with their response status.
+
+Args:
+    db (sqlite3.Connection): Database connection.
+
+Returns:
+    list[tuple[str, bool]]: List of tuples with target names and response status.
+'''
+
     c = db.cursor()
     q = c.execute("SELECT name, responded FROM targets ORDER BY sample_time DESC LIMIT 5")
     result = []
@@ -87,7 +193,17 @@ def get_last_five(db) ->list[tuple[str,bool]]:
         result.append((name, responded))
     return result
 
-def get_status_list(db):
+def get_status_list(db) -> dict[str, bool]:
+    '''
+Get the response status of all targets that have been sampled at least once.
+
+Args:
+    db (sqlite3.Connection): Database connection.
+
+Returns:
+    dict[str, bool]: A dictionary mapping target names to their response status.
+'''
+
     c = db.cursor()
     q = c.execute("SELECT name, responded FROM targets WHERE total_count > 0")
     result = {}
@@ -100,6 +216,21 @@ TEST = False
 
 
 def sample_target(db, name: str, address: str, stable: bool, src_address: str):
+    '''
+Sample a target by sending a ping and update the database with the results.
+
+Args:
+    db (sqlite3.Connection): Database connection.
+    name (str): Name of the target.
+    address (str): IP address of the target.
+    stable (bool): Whether the target is stable.
+    src_address (str): Source IP address to use for the ping.
+
+Logs:
+    - Ping results and process output.
+    - Database updates for target status.
+'''
+
     logging.info("sample target: %s", address)
     process = subprocess.run(
         ["ping", "-I", src_address, "-c1", "-W3", f"{address}"], capture_output=True, text=True
@@ -144,6 +275,18 @@ def sample_target(db, name: str, address: str, stable: bool, src_address: str):
 
 
 def monitor_targets(db_path_master: str, db_path_local: str, address: str):
+    '''
+Monitor targets listed in the master database and log results in the local database.
+
+Args:
+    db_path_master (str): Path to the master database file.
+    db_path_local (str): Path to the local database file.
+    address (str): Address of the current monitoring node.
+
+Raises:
+    Exception: If the monitoring process encounters an error.
+'''
+
     logging.info("Monitoring targets from %s to %s", address, db_path_local)
     create_db(db_path_local)
     db_master = open_db(db_path_master)
@@ -192,6 +335,17 @@ def monitor_targets(db_path_master: str, db_path_local: str, address: str):
 
 
 def init_targets(db_file_path: str, data: list[tuple[str,str,bool]]):
+    '''
+Initialize the targets table in the database with the provided data.
+
+Args:
+    db_file_path (str): Path to the SQLite database file.
+    data (list[tuple[str, str, bool]]): List of target tuples (name, address, stable).
+
+Creates:
+    - A clean database with the specified target entries.
+'''
+
     create_db(db_file_path)
 
     db = open_db(db_file_path)
@@ -211,7 +365,19 @@ def init_targets(db_file_path: str, data: list[tuple[str,str,bool]]):
     db.close()
 
 
-def test():
+def test() -> bool:
+    '''
+Run the script in test mode with predefined target data.
+
+Returns:
+    bool: True when the test completes successfully.
+
+Logs:
+    - Initialization of the test databases.
+    - Sampling of test targets and their statuses.
+    - Results of the test.
+'''
+
     data = [
         ("host1", "192.168.33.1", True),
         ("host2", "192.168.44.2", True),

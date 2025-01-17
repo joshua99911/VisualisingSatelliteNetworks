@@ -1,3 +1,30 @@
+'''
+This module provides a comprehensive framework for simulating a network of routers, satellites, 
+and ground stations using Mininet and FRR (Free Range Routing). The simulation supports dynamic 
+network topologies, monitoring, and routing configurations.
+
+Key Features:
+    - Custom Mininet node types with advanced routing capabilities.
+    - Ground station and satellite network emulation.
+    - Integration with FRR for dynamic routing protocols like OSPF.
+    - Dynamic uplink management and monitoring.
+
+Classes:
+    - `RouteNode`: Mininet node with support for loopback interfaces.
+    - `MNetNodeWrap`: Wrapper class for managing Mininet nodes.
+    - `GroundStation`: Specialized node for simulating ground stations.
+    - `FrrRouter`: Node for simulating FRR routers.
+    - `NetxTopo`: Topology for building virtual networks using a `networkx.Graph`.
+    - `FrrSimRuntime`: Runtime manager for controlling the simulation.
+
+Dependencies:
+    - Mininet
+    - NetworkX
+    - FRR (Free Range Routing)
+    - SQLite for monitoring and status tracking.
+'''
+
+from typing import Tuple
 import os
 import grp
 import pwd
@@ -26,12 +53,12 @@ from emulation.mnet import pmonitor
 
 
 class RouteNode(mininet.node.Node):
-    """
+    '''
     Mininet node with a loopback.
     Supports FrrRouters and ground sations.
 
     Includes an optional loopback interface with a /31 subnet mask
-    """
+    '''
 
     def __init__(self, name, **params):
         mininet.node.Node.__init__(self, name, **params)
@@ -47,6 +74,16 @@ class RouteNode(mininet.node.Node):
         return super().defaultIntf()
 
     def config(self, **params):
+        '''
+Configure the node and create a loopback interface if needed.
+
+Args:
+    params (dict): Configuration parameters, including `ip` for setting a default IP address.
+
+Creates:
+    - A loopback interface if no matching interface is found for the specified IP.
+'''
+
         # If we have a default IP and it is not an existing interface, create a
         # loopback.
         if params.get("ip") is not None:
@@ -63,14 +100,21 @@ class RouteNode(mininet.node.Node):
         super().config(**params)
 
     def setIP(self, ip):
+        '''
+        Set the IP address for the node.
+
+        Args:
+            ip (str): The IP address to set for the node.
+        '''
+
         # What is this for?
         mininet.node.Node.setIP(self, ip)
 
 
 
 class MNetNodeWrap:
-    """
-    """
+    '''
+    '''
 
     def __init__(self, name : str, default_ip: str) -> None:
         self.name : str = name
@@ -82,13 +126,24 @@ class MNetNodeWrap:
         self.last_five_pings = []
  
     def sendCmd(self, command :str):
+        '''
+        Send a command to the node for execution.
+
+        Args:
+            command (str): The command to execute on the node.
+        '''
+
         if self.node is not None:
             self.node.sendCmd(command)
 
     def start(self, net: mininet.net.Mininet) -> None:
-        """
-        Will be called after the mininet node has started
-        """
+        '''
+        Initialize the Mininet node after the network has started.
+
+        Args:
+            net (mininet.net.Mininet): The Mininet network instance.
+        '''
+
         self.node = net.getNodeByName(self.name)
 
     def waitOutput(self) -> None:
@@ -96,12 +151,21 @@ class MNetNodeWrap:
             self.node.waitOutput()
 
     def stop(self) -> None:
-        """
-        Will be called before the mininet node has stoped
-        """
+        '''
+        Perform cleanup operations before stopping the node.
+        '''
+
         pass
 
     def startMonitor(self, db_master_file, db_master):
+        '''
+        Start monitoring for the node.
+
+        Args:
+            db_master_file (str): Path to the master database file.
+            db_master (sqlite3.Connection): Open connection to the master database.
+        '''
+
         print(f"start monitor {self.name}:{self.defaultIP()}")
         self.sendCmd(
             f"python3 -m emulation.mnet.pmonitor monitor '{db_master_file}' '{self.working_db}' {self.defaultIP()} >> /dev/null 2>&1  &"
@@ -109,10 +173,23 @@ class MNetNodeWrap:
         pmonitor.set_running(db_master, self.defaultIP(), True)
 
     def stopMonitor(self, db_master):
+        '''
+        Stop monitoring for the node and clean up associated resources.
+
+        Args:
+            db_master (sqlite3.Connection): Open connection to the master database.
+        '''
+
         pmonitor.set_can_run(db_master, self.defaultIP(), False)
         os.unlink(self.working_db)
 
-    def update_monitor_stats(self):
+    def update_monitor_stats(self) -> Tuple[int, int]:
+        '''
+        Update the monitoring statistics for the node.
+
+        Returns:
+            tuple[int, int]: Counts of successful and total samples.
+        '''
         # Only get stats if DB is being used
         if os.path.getsize(self.working_db) > 0:
             db = pmonitor.open_db(self.working_db)
@@ -120,21 +197,30 @@ class MNetNodeWrap:
             self.last_five_pings = pmonitor.get_last_five(db)
             db.close()
             return good, total
+
+        # Return default values when DB is not in use or empty
         return 0, 0
  
     def defaultIP(self) -> str:
-        """
-        Return the default interface
-        """
+        '''
+        Get the default IP address of the node's interface.
+
+        Returns:
+            str: The default IP address.
+        '''
+
         if self.node is not None and self.node.defaultIntf() is not None:
             return self.node.defaultIntf().ip
         return self.default_ip
 
     def stable_node(self) -> bool:
-        """
-        Indicates if the node is expected to always be reachable
-        Default is True
-        """
+        '''
+        Check if the node is expected to always be reachable.
+
+        Returns:
+            bool: True if the node is stable, False otherwise.
+        '''
+
         return True
 
 
@@ -155,12 +241,12 @@ class Uplink:
 
 
 class GroundStation(MNetNodeWrap):
-    """
+    '''
     State for a Ground Station
 
     Tracks established uplinks to satellites.
     Not a mininet node.
-    """
+    '''
 
     def __init__(self, name: str, default_ip: str, uplinks: list[dict[str,typing.Any]]) -> None:
         super().__init__(name, default_ip)
@@ -171,9 +257,16 @@ class GroundStation(MNetNodeWrap):
             self.ip_pool.append(entry)
 
     def stable_node(self) -> bool:
-        """
-        Indicates that the node is not expected to be always reachable.
-        """
+        '''
+        Indicate that the ground station is not expected to be always reachable.
+
+        Overrides:
+            `MNetNodeWrap.stable_node`.
+
+        Returns:
+            bool: Always returns False.
+        '''
+
         return False
 
     def has_uplink(self, sat_name: str) -> bool:
@@ -183,9 +276,9 @@ class GroundStation(MNetNodeWrap):
         return False
 
     def sat_links(self) -> list[str]:
-        """
+        '''
         Return a list of satellite names to which we have uplinks
-        """
+        '''
         return [uplink.sat_name for uplink in self.uplinks]
 
     def _get_pool_entry(self) -> IPPoolEntry | None:
@@ -196,6 +289,17 @@ class GroundStation(MNetNodeWrap):
         return None
 
     def add_uplink(self, sat_name: str, distance: int) -> Uplink | None:
+        '''
+        Add an uplink to a satellite.
+
+        Args:
+            sat_name (str): Name of the satellite.
+            distance (int): Distance to the satellite.
+
+        Returns:
+            Uplink | None: The created uplink, or None if no available IP pool entry.
+        '''
+
         pool_entry = self._get_pool_entry()
         if pool_entry is None:
             return None
@@ -204,6 +308,16 @@ class GroundStation(MNetNodeWrap):
         return uplink
 
     def remove_uplink(self, sat_name: str) -> Uplink|None:
+        '''
+        Remove an uplink to a satellite.
+
+        Args:
+            sat_name (str): Name of the satellite.
+
+        Returns:
+            Uplink | None: The removed uplink, or None if the uplink doesn't exist.
+        '''
+
         for entry in self.uplinks:
             if entry.sat_name == sat_name:
                 entry.ip_pool_entry.used = False
@@ -213,11 +327,11 @@ class GroundStation(MNetNodeWrap):
 
 
 class FrrRouter(MNetNodeWrap):
-    """
+    '''
     Support an FRR router under mininet.
     - handles the the FRR config files, starting and stopping FRR.
     Does not cleanup config files.
-    """
+    '''
 
     CFG_DIR = "/etc/frr/{node}"
     VTY_DIR = "/var/frr/{node}/{daemon}.vty"
@@ -231,11 +345,28 @@ class FrrRouter(MNetNodeWrap):
         self.ospf = None
 
     def configure(self, vtysh: str, daemons: str, ospf: str) -> None:
+        '''
+        Set the configuration files for the router.
+
+        Args:
+            vtysh (str): Contents of the `vtysh.conf` file.
+            daemons (str): Contents of the `daemons` file.
+            ospf (str): Contents of the `frr.conf` file.
+        '''
+
         self.vtysh = vtysh
         self.daemons = daemons
         self.ospf = ospf
 
     def write_configs(self) -> None:
+        '''
+        Write the router's configuration files to the appropriate directories.
+
+        Creates:
+            - Configuration files for the router, if not already present.
+            - Logging and configuration directories for the router.
+        '''
+
         # Get frr config and save to frr config directory
         cfg_dir = FrrRouter.CFG_DIR.format(node=self.name)
         log_dir = FrrRouter.LOG_DIR.format(node=self.name)
@@ -286,6 +417,17 @@ class FrrRouter(MNetNodeWrap):
         self.sendCmd(f"/usr/lib/frr/frrinit.sh stop '{self.name}'")
 
     def config_frr(self, daemon: str, commands: list[str]) -> bool:
+        '''
+        Send configuration commands to an FRR daemon.
+
+        Args:
+            daemon (str): Name of the FRR daemon (e.g., "ospfd").
+            commands (list[str]): List of configuration commands.
+
+        Returns:
+            bool: True if all commands were successfully executed, False otherwise.
+        '''
+
         if self.node is None:
             # Running in stub mode
             return True
@@ -334,11 +476,11 @@ class FrrRouter(MNetNodeWrap):
 
 
 class StubMininet:
-    """
+    '''
     In order to run and test with out standing up an entire mininet environment (that is run as root),
     we can stub out the mininet calls. This results in the mininet nodes being returned as None and code
     needs to handle this case.
-    """
+    '''
     def __init__(self):
         pass
 
@@ -359,9 +501,9 @@ class StubMininet:
 
 
 class NetxTopo(mininet.topo.Topo):
-    """
+    '''
     Mininet topology object used to build the virtual network.
-    """
+    '''
     def __init__(self, graph: networkx.Graph):
         self.graph = graph
         self.routers: list[FrrRouter] = []
@@ -369,9 +511,14 @@ class NetxTopo(mininet.topo.Topo):
         super().__init__()
 
     def build(self, *args, **params):
-        """
-        Build the network according to the information in the networkx.Graph
-        """
+        '''
+        Construct the Mininet topology based on the `networkx.Graph` structure.
+
+        Creates:
+            - Mininet hosts for routers and ground stations.
+            - Links between nodes based on the graph edges.
+        '''
+
         # Create routers
         for name in torus_topo.satellites(self.graph):
             node = self.graph.nodes[name]
@@ -403,6 +550,7 @@ class NetxTopo(mininet.topo.Topo):
                 ip_intf = format(ip)
                 ip_addr = format(ip.ip)
             self.addHost(name, cls=RouteNode, ip=ip_intf)
+
             station = GroundStation(name, ip_addr, node["uplinks"])
             self.ground_stations.append(station)
 
@@ -434,9 +582,9 @@ class NetxTopo(mininet.topo.Topo):
 
 
 class FrrSimRuntime:
-    """
+    '''
     Code for the FRR / Mininet / Monitoring functions.
-    """
+    '''
     def __init__(self, topo: NetxTopo, net: mininet.net.Mininet, stable_monitor: bool =False):
         self.graph = topo.graph
 
@@ -465,7 +613,14 @@ class FrrSimRuntime:
             self.net = StubMininet()
             self.stub_net = True
 
-    def start_routers(self) -> None: 
+    def start_routers(self) -> None:
+        '''
+        Start all routers and monitoring processes in the simulation.
+
+        Populates the monitoring database with target information and launches
+        monitoring threads for dynamic and stable nodes.
+        '''
+ 
         # Populate master db file
         data = []
         # Stable targets - to monitor
@@ -499,6 +654,12 @@ class FrrSimRuntime:
                 node.waitOutput()
 
     def stop_routers(self):
+        '''
+        Stop all routers and monitoring processes in the simulation.
+
+        Performs cleanup of monitoring databases and network resources.
+        '''
+
         # Stop monitor on all nodes
         db_master = pmonitor.open_db(self.db_file)
         for node in self.nodes.values():
@@ -515,6 +676,12 @@ class FrrSimRuntime:
         os.unlink(self.db_file)
 
     def update_monitor_stats(self):
+        '''
+        Update monitoring statistics for all nodes in the simulation.
+
+        Updates the `stat_samples` list with the latest counts of successful and total samples.
+        '''
+
         stable_good_count: int = 0
         stable_total_count: int = 0
         dynamic_good_count: int = 0
@@ -542,6 +709,13 @@ class FrrSimRuntime:
             self.stat_samples.pop(0)
 
     def get_last_five_stats(self) -> dict[str, list[tuple[str,bool]]]:
+        '''
+        Retrieve the last five monitoring samples for each node.
+
+        Returns:
+            dict[str, list[tuple[str, bool]]]: Dictionary mapping node names to their last five samples.
+        '''
+
         result: dict[str, list[tuple[str,bool]]] = {}
         for node in self.nodes.values():
             result[node.name] = node.last_five_pings
@@ -685,7 +859,7 @@ class FrrSimRuntime:
         return True
 
     def _update_dns_for_uplink(self, station_name: str, sat_name: str, ip1: ipaddress.IPv4Interface, ip2: ipaddress.IPv4Interface, add: bool = True):
-        """
+        '''
         Update DNS entries for a dynamic uplink.
         
         Args:
@@ -694,7 +868,7 @@ class FrrSimRuntime:
             ip1: Ground station's interface IP
             ip2: Satellite's interface IP
             add: True to add entries, False to remove them
-        """
+        '''
         # Create DNS entries for both ends of the uplink
         dns_entries = [
             f"{format(ip1.ip)}\t{station_name}-TO-{sat_name} {station_name}-uplink",
