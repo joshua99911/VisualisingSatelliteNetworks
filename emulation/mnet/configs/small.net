@@ -8,3 +8,11 @@ stable_monitors=yes
 
 [physical]
 min_altitude=10
+
+# Ground Stations Name = lat, lon
+[ground_stations]
+G_PAO = 37.44651, -122.13861
+G_SYD = -33.94056, 151.17268
+G_ZRH = 47.45516, 8.56350
+G_HND = 35.54852, 139.78079
+G_ADL = 34.9285, 138.6007

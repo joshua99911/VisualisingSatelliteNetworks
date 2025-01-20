@@ -249,7 +249,7 @@ class SatSimulation:
             current_time = future_time
 
 
-def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, calc_only: bool) -> None:
+def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, calc_only: bool, ground_station_data: dict) -> None:
     '''
     Simulate physical positions of satellites.
 
@@ -259,7 +259,7 @@ def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, c
     min_alt: Minimum angle (degrees) above horizon needed to connect to the satellite
     calc_only: If True, only loop quicky dumping results to the screen
     '''
-    graph = torus_topo.create_network(num_rings, num_routers, ground_stations)
+    graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data)
     sim: SatSimulation = SatSimulation(graph)
     sim.min_altitude = min_alt
     sim.calc_only = calc_only
@@ -281,6 +281,7 @@ if __name__ == "__main__":
         sys.exit(-1)
         
     parser = configparser.ConfigParser()
+    parser.optionxform = str  # Retain case sensitivity
     parser['network'] = {}
     parser['physical'] = {}
     try:
@@ -291,6 +292,16 @@ if __name__ == "__main__":
         usage()
         sys.exit(-1)
 
+    ground_station_data = {}
+    if 'ground_stations' in parser:
+        print("Ground Stations True")
+        for name, coords in parser['ground_stations'].items():
+            lat, lon = map(float, coords.split(','))
+            ground_station_data[name] = (lat, lon)
+    else:
+        print("Ground Stations False")
+
+
     num_rings = parser['network'].getint('rings', 4)
     num_routers = parser['network'].getint('routers', 4)
     # Should ground stations be included in the network?
@@ -299,4 +310,5 @@ if __name__ == "__main__":
     min_alt = parser['physical'].getint('min_altitude', SatSimulation.MIN_ALTITUDE)
 
     print(f"Running {num_rings} rings with {num_routers} per ring, ground stations {ground_stations}")
-    run(num_rings, num_routers, ground_stations, min_alt, calc_only)
+    run(num_rings, num_routers, ground_stations, min_alt, calc_only, ground_station_data)
+

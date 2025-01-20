@@ -215,7 +215,8 @@ def merge_captures():
 
 
 
-def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground_stations: bool, enable_monitoring: bool = False):
+def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground_stations: bool, enable_monitoring: bool = False, ground_station_data: dict = None) -> None:
+
     '''
     Execute the simulation of an FRR router network in a torus topology using Mininet.
 
@@ -234,7 +235,9 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
     network.
     '''
     # Create a networkx graph annotated with FRR configs
-    graph = torus_topo.create_network(num_rings, num_routers, ground_stations)
+    print("Before Create Network Function")
+    print(ground_station_data)
+    graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data)
     frr_config_topo.annotate_graph(graph)
     frr_config_topo.dump_graph(graph)
 
@@ -271,11 +274,12 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors: bool, ground
     print(f"\n****Running {num_rings} rings with {num_routers} per ring, stable monitors {stable_monitors}, "
           f"ground_stations {ground_stations}, monitoring {'enabled' if enable_monitoring else 'disabled'}")
     
-    # Open xterm for specific nodes
-    node_list = [net.get('G_PAO'), net.get('G_SYD'), net.get('R0_0')]  # Replace with your node names
-    for node in node_list:
-        makeTerm(node, title=f'Terminal for {node.name}')
-        print("Made Terminal for ", {node.name})
+    # NO LONGER WORKS WITH MODULAR GROUND STATIONS, WILL NEED TO ADD FROM CONFIG FILE
+    # # Open xterm for specific nodes
+    # node_list = [net.get('G_PAO'), net.get('G_SYD'), net.get('R0_0')]  # Replace with your node names
+    # for node in node_list:
+    #     makeTerm(node, title=f'Terminal for {node.name}')
+    #     print("Made Terminal for ", {node.name})
 
     if use_cli and net is not None:
         CLI(net)
@@ -333,6 +337,7 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     parser = configparser.ConfigParser()
+    parser.optionxform = str  # Retain case sensitivity
     parser['network'] = {}
     parser['monitor'] = {}
     try:
@@ -342,6 +347,16 @@ if __name__ == "__main__":
         print(str(e))
         usage()
         sys.exit(-1)
+    ground_station_data = {}
+    if 'ground_stations' in parser:
+        print("Ground Stations True")
+        for name, coords in parser['ground_stations'].items():
+            lat, lon = map(float, coords.split(','))
+            ground_station_data[name] = (lat, lon)
+    else:
+        print("Ground Stations False")
+
+    print(ground_station_data)
 
     num_rings = parser['network'].getint('rings', 4)
     num_routers = parser['network'].getint('routers', 4)
@@ -353,4 +368,4 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     setLogLevel("info")
-    run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stations, enable_monitoring)
+    run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stations, enable_monitoring, ground_station_data)

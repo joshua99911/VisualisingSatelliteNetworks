@@ -19,7 +19,7 @@ TYPE_GROUND = "ground_station"
 LAT = "latitude"
 LON = "longitude"
 
-def create_network(num_rings: int =NUM_RINGS, num_ring_nodes: int =NUM_RING_NODES, ground_stations: bool = True) -> networkx.Graph:
+def create_network(num_rings: int = NUM_RINGS, num_ring_nodes: int = NUM_RING_NODES, ground_stations: bool = True, ground_station_data: dict = None) -> networkx.Graph:
     '''
     Create a torus network of the given size annotated with orbital information.
     '''
@@ -29,6 +29,7 @@ def create_network(num_rings: int =NUM_RINGS, num_ring_nodes: int =NUM_RING_NODE
     graph.graph["ring_list"] = []
     graph.graph["inclination"] = 53.9
     prev_ring_num = None
+
     for ring_num in range(num_rings):
         create_ring(graph, ring_num, num_ring_nodes)
         if prev_ring_num is not None:
@@ -36,14 +37,17 @@ def create_network(num_rings: int =NUM_RINGS, num_ring_nodes: int =NUM_RING_NODE
         prev_ring_num = ring_num
     if prev_ring_num is not None:
         connect_rings(graph, prev_ring_num, 0, num_ring_nodes)
+    print("FROM TORUS_TOPO")
+    print(ground_station_data)
 
-    if ground_stations:
-        add_ground_stations(graph)
+    if ground_stations and ground_station_data:
+        add_ground_stations(graph, ground_station_data)
 
     # Set all edges to up
     for edge_name, edge in graph.edges.items():
         edge["up"] = True
     return graph
+
 
 def ground_stations(graph: networkx.Graph) -> list[str]:
     '''
@@ -164,37 +168,26 @@ def connect_rings(graph: networkx.Graph, ring1: int, ring2: int, num_ring_nodes:
         graph.edges[node1_name, node2_name]["inter_ring"] = True
 
 
-def add_ground_stations(graph: networkx.Graph) -> None:
-    # Create ground stations with links
-    # We need links because mininet doesn't handle nodes without links the
-    # way we want (e.g. will not call config on the mininet node)
-    graph.add_node("G_PAO")
-    node = graph.nodes["G_PAO"]
-    node[TYPE] = TYPE_GROUND
-    node[LAT] = 37.44651
-    node[LON] = -122.13861
+def add_ground_stations(graph: networkx.Graph, ground_station_data: dict) -> None:
+    '''
+    Add ground stations to the graph using the provided ground station data.
 
-    graph.add_node("G_SYD")
-    node = graph.nodes["G_SYD"]
-    node[TYPE] = TYPE_GROUND
-    node[LAT] = -33.94056
-    node[LON] = 151.17268
-    graph.add_edge("G_PAO", "G_SYD")
+    Args:
+        graph: The networkx graph to update.
+        ground_station_data: Dictionary with ground station names as keys and (lat, lon) tuples as values.
+    '''
+    for name, (lat, lon) in ground_station_data.items():
+        graph.add_node(name)
+        node = graph.nodes[name]
+        node[TYPE] = TYPE_GROUND
+        node[LAT] = lat
+        node[LON] = lon
 
-    graph.add_node("G_ZRH")
-    node = graph.nodes["G_ZRH"]
-    node[TYPE] = TYPE_GROUND
-    node[LAT] = 47.45516
-    node[LON] = 8.56350
-    graph.add_edge("G_SYD", "G_ZRH")
+    # Optionally, create edges between ground stations
+    ground_station_names = list(ground_station_data.keys())
+    for i in range(len(ground_station_names) - 1):
+        graph.add_edge(ground_station_names[i], ground_station_names[i + 1])
 
-    graph.add_node("G_HND")
-    node = graph.nodes["G_HND"]
-    node[TYPE] = TYPE_GROUND
-    node[LAT] = 35.54852
-    node[LON] = 139.78079
-    graph.add_edge("G_ZRH", "G_HND")
-    graph.add_edge("G_HND", "G_PAO")
 
 
 #
