@@ -37,8 +37,6 @@ def create_network(num_rings: int = NUM_RINGS, num_ring_nodes: int = NUM_RING_NO
         prev_ring_num = ring_num
     if prev_ring_num is not None:
         connect_rings(graph, prev_ring_num, 0, num_ring_nodes)
-    print("FROM TORUS_TOPO")
-    print(ground_station_data)
 
     if ground_stations and ground_station_data:
         add_ground_stations(graph, ground_station_data)
