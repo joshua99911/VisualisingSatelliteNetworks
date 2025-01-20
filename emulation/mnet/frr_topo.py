@@ -931,6 +931,10 @@ class FrrSimRuntime:
         station_node = self.net.getNodeByName(station_name)
         sat_node = self.net.getNodeByName(sat_name)
         
+        # Check if uplinks are available
+        if not self.ground_stations[station_name].uplinks:
+            raise ValueError(f"No uplinks exist for station {station_name}. Cannot remove link.")
+        
         # Remove DNS entries before removing the link
         uplink = self.ground_stations[station_name].uplinks[0]  # Get the uplink to get IPs
         self._update_dns_for_uplink(
@@ -939,7 +943,8 @@ class FrrSimRuntime:
             uplink.ip_pool_entry.ip1, 
             uplink.ip_pool_entry.ip2, 
             add=False
-        )
+    )
+
         
         # Remove static route
         station = self.ground_stations[station_name]

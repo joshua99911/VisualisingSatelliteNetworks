@@ -1,5 +1,5 @@
 [network]
-rings=4
+rings=6
 routers=8
 ground_stations=yes
 
