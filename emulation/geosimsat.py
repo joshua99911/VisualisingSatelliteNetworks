@@ -259,7 +259,7 @@ def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, c
     min_alt: Minimum angle (degrees) above horizon needed to connect to the satellite
     calc_only: If True, only loop quicky dumping results to the screen
     '''
-    graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data)
+    graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data, inclination, altitude)
     sim: SatSimulation = SatSimulation(graph)
     sim.min_altitude = min_alt
     sim.calc_only = calc_only
@@ -308,6 +308,9 @@ if __name__ == "__main__":
     ground_stations = parser['network'].getboolean('ground_stations', False)
     # Minimum angle above horizon needed to connect to satellites
     min_alt = parser['physical'].getint('min_altitude', SatSimulation.MIN_ALTITUDE)
+    inclination = parser['constellation'].getfloat('inclination', 53.9)
+    altitude = parser['constellation'].getfloat('altitude', 550)
+
 
     print(f"Running {num_rings} rings with {num_routers} per ring, ground stations {ground_stations}")
     run(num_rings, num_routers, ground_stations, min_alt, calc_only, ground_station_data)

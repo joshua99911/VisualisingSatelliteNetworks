@@ -206,7 +206,7 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stati
 
         # Open terminals if needed
         if net is not None:
-            nodes_to_open = ['G_PAO', 'R0_0']
+            nodes_to_open = ['G_LON', 'R0_0']
             for node_name in nodes_to_open:
                 node = net.get(node_name)
                 if node:

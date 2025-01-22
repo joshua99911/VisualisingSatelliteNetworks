@@ -19,7 +19,14 @@ TYPE_GROUND = "ground_station"
 LAT = "latitude"
 LON = "longitude"
 
-def create_network(num_rings: int = NUM_RINGS, num_ring_nodes: int = NUM_RING_NODES, ground_stations: bool = True, ground_station_data: dict = None) -> networkx.Graph:
+def create_network(
+    num_rings: int = NUM_RINGS, 
+    num_ring_nodes: int = NUM_RING_NODES, 
+    ground_stations: bool = True, 
+    ground_station_data: dict = None,
+    inclination: float = 53.9,
+    altitude: float = 550
+) -> networkx.Graph:
     '''
     Create a torus network of the given size annotated with orbital information.
     '''
@@ -27,7 +34,8 @@ def create_network(num_rings: int = NUM_RINGS, num_ring_nodes: int = NUM_RING_NO
     graph.graph["rings"] = num_rings
     graph.graph["ring_nodes"] = num_ring_nodes
     graph.graph["ring_list"] = []
-    graph.graph["inclination"] = 53.9
+    graph.graph["inclination"] = inclination
+    graph.graph["altitude"] = altitude
     prev_ring_num = None
 
     for ring_num in range(num_rings):
@@ -45,6 +53,7 @@ def create_network(num_rings: int = NUM_RINGS, num_ring_nodes: int = NUM_RING_NO
     for edge_name, edge in graph.edges.items():
         edge["up"] = True
     return graph
+
 
 
 def ground_stations(graph: networkx.Graph) -> list[str]:
@@ -123,8 +132,8 @@ def get_node_name(ring_num: int, node_num: int) -> str:
     return f"R{ring_num}_{node_num}"
 
 
-def create_ring(graph: networkx.Graph, ring_num: int , num_ring_nodes: int) -> None:
-    prev_node_name: str|None = None
+def create_ring(graph: networkx.Graph, ring_num: int, num_ring_nodes: int) -> None:
+    prev_node_name: str | None = None
     ring_nodes: list[str] = []
     graph.graph["ring_list"].append(ring_nodes)
 
@@ -132,6 +141,7 @@ def create_ring(graph: networkx.Graph, ring_num: int , num_ring_nodes: int) -> N
     num_rings: int = graph.graph["rings"]
     right_ascension: float = 360 / num_rings * ring_num
     inclination: float = graph.graph["inclination"]
+    altitude: float = graph.graph["altitude"]
 
     for node_num in range(num_ring_nodes):
         # Create a node in the ring
@@ -139,12 +149,13 @@ def create_ring(graph: networkx.Graph, ring_num: int , num_ring_nodes: int) -> N
         graph.add_node(node_name)
         graph.nodes[node_name][TYPE] = TYPE_SAT
         mean_anomaly = 360 / num_ring_nodes * node_num
-        # offset 1/2 spacing for odd rings
+        # Offset 1/2 spacing for odd rings
         if ring_num % 2 == 1:
             mean_anomaly += 360 / num_ring_nodes / 2
         orbit = OrbitData(right_ascension, inclination, mean_anomaly)
         orbit.assign_cat_num()
         graph.nodes[node_name]["orbit"] = orbit
+        graph.nodes[node_name]["altitude"] = altitude  # Add altitude to the node metadata
         ring_nodes.append(node_name)
 
         # Create a link to the previously created node
@@ -156,6 +167,7 @@ def create_ring(graph: networkx.Graph, ring_num: int , num_ring_nodes: int) -> N
     if prev_node_name is not None:
         graph.add_edge(prev_node_name, get_node_name(ring_num, 0))
         graph.edges[prev_node_name, get_node_name(ring_num, 0)]["inter_ring"] = False
+
 
 
 def connect_rings(graph: networkx.Graph, ring1: int, ring2: int, num_ring_nodes: int) -> None:
