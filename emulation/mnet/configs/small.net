@@ -1,6 +1,10 @@
 [network]
-rings=5
-routers=14
+#Test
+rings=2
+routers=2
+#Actual
+#rings=5
+#routers=14
 ground_stations=yes
 
 [monitor]

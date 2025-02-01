@@ -1,278 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SatNetMiniSim</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Plotly for graphs -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <!-- Add base styling -->
-    <style>
-        .status-box {
-            display: inline-block;
-            padding: 2px 6px;
-            margin: 1px;
-            font-family: monospace;
-        }
-        .chart-container {
-            margin: 20px 0;
-        }
-        .satellite-map-container {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .section-container {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #dee2e6;
-        }
-        .router-link {
-            color: #0d6efd;
-            text-decoration: none;
-        }
-        .router-link:hover {
-            text-decoration: underline;
-        }
-        .status-box {
-            display: inline-block;
-            padding: 4px 8px;
-            margin: 2px;
-            font-family: monospace;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-        .section-header {
-            cursor: pointer;
-            user-select: none;
-        }
-        .section-header:hover {
-            background-color: #f8f9fa;
-        }
-        .collapse-icon {
-            transition: transform 0.3s ease;
-        }
-        .collapsed .collapse-icon {
-            transform: rotate(-90deg);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SatNetMiniSim</title>
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- Plotly for graphs -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <!-- Add base styling -->
+  <style>
+    .status-box {
+      display: inline-block;
+      padding: 4px 8px;
+      margin: 2px;
+      font-family: monospace;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .chart-container {
+      margin: 20px 0;
+    }
+    .satellite-map-container {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .section-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #dee2e6;
+    }
+    .router-link {
+      color: #0d6efd;
+      text-decoration: none;
+    }
+    .router-link:hover {
+      text-decoration: underline;
+    }
+    .section-header {
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-header:hover {
+      background-color: #f8f9fa;
+    }
+    .collapse-icon {
+      transition: transform 0.3s ease;
+    }
+    .collapsed .collapse-icon {
+      transform: rotate(-90deg);
+    }
+  </style>
 </head>
 <body class="bg-light">
-    <div class="container">
-        <div class="col-lg-8 mx-auto p-4 py-md-5">
-            <nav class="mb-4">
-                <h2 class="fw-bold">Home</h2>
-            </nav>
+  <div class="container">
+    <div class="col-lg-8 mx-auto p-4 py-md-5">
+      <nav class="mb-4">
+        <h2 class="fw-bold">Home</h2>
+      </nav>
 
-            <div class="d-flex align-items-center mb-5 border-bottom pb-3">
-                <span class="fs-4 fw-semibold">SatNetMiniSim</span>
-            </div>
+      <div class="d-flex align-items-center mb-5 border-bottom pb-3">
+        <span class="fs-4 fw-semibold">SatNetMiniSim</span>
+      </div>
 
-            <div class="row">
-                <div class="col">
-                    <!-- Network Status Section -->
-                    <div class="section-container">
-                        <h3 class="mb-4">Network Status</h3>
-                        <p><strong>Network:</strong> {{ info["rings"] }} Rings x {{ info["ring_nodes"] }} Nodes</p>
-                        <p><strong>Links:</strong> {{ info["link_stats"]["count"] }} Total, 
-                            <span class="text-success">{{ info["link_stats"]["up_count"] }} Up</span>, 
-                            <span class="text-danger">{{ info["link_stats"]["count"] - info["link_stats"]["up_count"] }} Down</span>
-                        </p>
-                        <p><strong>Sample Time:</strong> {{ info["current_time"] }}</p>
-                        <p><strong>Total Run Time:</strong> {{ info["run_time"] }}</p>
-                    </div>
+      <div class="row">
+        <div class="col">
+          <!-- Network Status Section -->
+          <div class="section-container">
+            <h3 class="mb-4">Network Status</h3>
+            <p><strong>Network:</strong> {{ info["rings"] }} Rings x {{ info["ring_nodes"] }} Nodes</p>
+            <p>
+              <strong>Links:</strong>
+              {{ info["link_stats"]["count"] }} Total,
+              <span class="text-success">{{ info["link_stats"]["up_count"] }} Up</span>,
+              <span class="text-danger">{{ info["link_stats"]["count"] - info["link_stats"]["up_count"] }} Down</span>
+            </p>
+            <p><strong>Sample Time:</strong> {{ info["current_time"] }}</p>
+            <p><strong>Total Run Time:</strong> {{ info["run_time"] }}</p>
+          </div>
 
-                    <!-- Satellite Map Component -->
-                    <div id="satellite-map" class="satellite-map-container"></div>
+          <!-- Satellite Map Component (React) -->
+          <div id="satellite-map" class="satellite-map-container"></div>
 
-                    <!-- Connection Status -->
-                    <div class="section-container">
-                        <h3 class="mb-4">Connection Status</h3>
-                        {% if info["monitor_stable_nodes"] %}
-                            <h4 class="mb-3">Stable Nodes</h4>
-                            <div class="chart-container">
-                                <div id="stable-nodes-chart"></div>
-                            </div>
-                        {% endif %}
-
-                        <h4 class="mb-3">Dynamic Nodes</h4>
-                        <div class="chart-container">
-                            <div id="dynamic-nodes-chart"></div>
-                        </div>
-                    </div>
-
-                    <!-- Events Section -->
-                    <div class="section-container">
-                        <h3 class="mb-4">Events</h3>
-                        <ul class="list-unstyled">
-                            {% if info["events"]|length == 0 %}
-                                <li><em>None</em></li>
-                            {% endif %}
-                            {% for entry in info["events"] %}
-                                <li class="mb-2">{{ entry[0] }}: {{ entry[1] }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
-                    <!-- Ground Stations Section -->
-                    <div class="section-container">
-                        <h3 class="section-header d-flex align-items-center" data-bs-toggle="collapse" data-bs-target="#ground-stations-content">
-                            <span class="collapse-icon me-2">▼</span>
-                            Ground Stations
-                        </h3>
-                        <div id="ground-stations-content" class="collapse show">
-                            <ul class="list-unstyled mt-3">
-                                {% for entry in info["stations"] %}
-                                    <li class="mb-4">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <a href="{{ url_for('view_station', name=entry.name) }}" class="router-link me-3">{{ entry.name }}</a>
-                                            <span class="text-muted">{{ entry.defaultIP() }}</span>
-                                        </div>
-                                        <div class="mb-2">
-                                            {% for stat in info["ping_stats"][entry.name] %}
-                                                {% if stat[1] == 1 %}
-                                                    {%- set bg = "lightgreen" %}
-                                                {% elif stat[1] == 0 %}
-                                                    {%- set bg = "pink" %}
-                                                {% endif %}
-                                                <span class="status-box" style="background-color: {{ bg }}">
-                                                    {{ stat[0] }}
-                                                </span>
-                                            {% endfor %}
-                                        </div>
-                                        <ul class="list-unstyled ms-3">
-                                            {% for link in entry.uplinks %}
-                                                <li class="text-muted">Uplink: {{ link.sat_name }} {{ link.distance }} km</li>
-                                            {% endfor %}
-                                        </ul>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Routers Section -->
-                    <div class="section-container">
-                        <h3 class="section-header d-flex align-items-center" data-bs-toggle="collapse" data-bs-target="#routers-content">
-                            <span class="collapse-icon me-2">▼</span>
-                            Routers ({{ info["routers"]|length }})
-                        </h3>
-                        <div id="routers-content" class="collapse show">
-                            <ul class="list-unstyled mt-3">
-                                {% for entry in info["routers"] %}
-                                    <li class="mb-3">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <a href="{{ url_for('view_router', node=entry[0]) }}" class="router-link me-3">{{ entry[0] }}</a>
-                                            <span class="text-muted">{{ entry[1] }}</span>
-                                        </div>
-                                        <div>
-                                            {% for stat in info["ping_stats"][entry[0]] %}
-                                                {% if stat[1] == 1 %}
-                                                    {%- set bg = "lightgreen" %}
-                                                {% elif stat[1] == 0 %}
-                                                    {%- set bg = "pink" %}
-                                                {% endif %}
-                                                <span class="status-box" style="background-color: {{ bg }}">
-                                                    {{ stat[0] }}
-                                                </span>
-                                            {% endfor %}
-                                        </div>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- React dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX support -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
-    <!-- Load our components -->
-    <script type="text/babel" src="/static/js/SatelliteMap.js"></script>
-    <script type="text/babel" src="/static/js/main.js"></script>
-
-    <!-- Connection Status Charts -->
-    <script>
-        // Create the connection status charts
-        function createConnectionCharts() {
+          <!-- Connection Status -->
+          <div class="section-container">
+            <h3 class="mb-4">Connection Status</h3>
             {% if info["monitor_stable_nodes"] %}
-            // Stable nodes chart
-            var stableTrace1 = {
-                x: {{ info["stats_dates"]|tojson }},
-                y: {{ info["stats_stable_fail"]|tojson }},
-                name: 'Failed',
-                type: 'scatter',
-                fill: 'tonexty',
-                line: {color: '#ff7f7f'}
-            };
-            var stableTrace2 = {
-                x: {{ info["stats_dates"]|tojson }},
-                y: {{ info["stats_stable_ok"]|tojson }},
-                name: 'Success',
-                type: 'scatter',
-                fill: 'tonexty',
-                line: {color: '#90ee90'}
-            };
-            var stableLayout = {
-                showlegend: true,
-                height: 200,
-                margin: {t: 10, b: 30, l: 40, r: 10}
-            };
-            Plotly.newPlot('stable-nodes-chart', [stableTrace1, stableTrace2], stableLayout);
+              <h4 class="mb-3">Stable Nodes</h4>
+              <div class="chart-container">
+                <div id="stable-nodes-chart"></div>
+              </div>
             {% endif %}
 
-            // Dynamic nodes chart
-            var dynamicTrace1 = {
-                x: {{ info["stats_dates"]|tojson }},
-                y: {{ info["stats_dynamic_fail"]|tojson }},
-                name: 'Failed',
-                type: 'scatter',
-                fill: 'tonexty',
-                line: {color: '#ff7f7f'}
-            };
-            var dynamicTrace2 = {
-                x: {{ info["stats_dates"]|tojson }},
-                y: {{ info["stats_dynamic_ok"]|tojson }},
-                name: 'Success',
-                type: 'scatter',
-                fill: 'tonexty',
-                line: {color: '#90ee90'}
-            };
-            var dynamicLayout = {
-                showlegend: true,
-                height: 200,
-                margin: {t: 10, b: 30, l: 40, r: 10}
-            };
-            Plotly.newPlot('dynamic-nodes-chart', [dynamicTrace1, dynamicTrace2], dynamicLayout);
+            <h4 class="mb-3">Dynamic Nodes</h4>
+            <div class="chart-container">
+              <div id="dynamic-nodes-chart"></div>
+            </div>
+          </div>
+
+          <!-- Events Section -->
+          <div class="section-container">
+            <h3 class="mb-4">Events</h3>
+            <ul class="list-unstyled">
+              {% if info["events"]|length == 0 %}
+                <li><em>None</em></li>
+              {% endif %}
+              {% for entry in info["events"] %}
+                <li class="mb-2">{{ entry[0] }}: {{ entry[1] }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <!-- Ground Stations Section -->
+          <div class="section-container">
+            <h3
+              class="section-header d-flex align-items-center"
+              data-bs-toggle="collapse"
+              data-bs-target="#ground-stations-content"
+            >
+              <span class="collapse-icon me-2">▼</span>
+              Ground Stations
+            </h3>
+            <div id="ground-stations-content" class="collapse show">
+              <ul class="list-unstyled mt-3">
+                {% for entry in info["stations"] %}
+                  <li class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                      <a href="{{ url_for('view_station', name=entry.name) }}"
+                         class="router-link me-3">
+                        {{ entry.name }}
+                      </a>
+                      <span class="text-muted">{{ entry.defaultIP() }}</span>
+                    </div>
+                    <div class="mb-2">
+                      {% for stat in info["ping_stats"][entry.name] %}
+                        {% if stat[1] == 1 %}
+                          {%- set bg = "lightgreen" %}
+                        {% elif stat[1] == 0 %}
+                          {%- set bg = "pink" %}
+                        {% endif %}
+                        <span class="status-box" style="background-color: {{ bg }}">
+                          {{ stat[0] }}
+                        </span>
+                      {% endfor %}
+                    </div>
+                    <ul class="list-unstyled ms-3">
+                      {% for link in entry.uplinks %}
+                        <li class="text-muted">Uplink: {{ link.sat_name }} {{ link.distance }} km</li>
+                      {% endfor %}
+                    </ul>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+
+          <!-- Routers Section -->
+          <div class="section-container">
+            <h3
+              class="section-header d-flex align-items-center"
+              data-bs-toggle="collapse"
+              data-bs-target="#routers-content"
+            >
+              <span class="collapse-icon me-2">▼</span>
+              Routers ({{ info["routers"]|length }})
+            </h3>
+            <div id="routers-content" class="collapse show">
+              <ul class="list-unstyled mt-3">
+                {% for entry in info["routers"] %}
+                  <li class="mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                      <a href="{{ url_for('view_router', node=entry[0]) }}"
+                         class="router-link me-3">
+                        {{ entry[0] }}
+                      </a>
+                      <span class="text-muted">{{ entry[1] }}</span>
+                    </div>
+                    <div>
+                      {% for stat in info["ping_stats"][entry[0]] %}
+                        {% if stat[1] == 1 %}
+                          {%- set bg = "lightgreen" %}
+                        {% elif stat[1] == 0 %}
+                          {%- set bg = "pink" %}
+                        {% endif %}
+                        <span class="status-box" style="background-color: {{ bg }}">
+                          {{ stat[0] }}
+                        </span>
+                      {% endfor %}
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- React & ReactDOM (development or production - your choice) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.development.js"></script>
+
+  <!-- Babel for in-browser JSX transpiling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+
+  <!-- Single-file React code with SatelliteMap + icons + render call -->
+  <!-- Make sure /static/js/SatelliteMap.js contains everything (icons & ReactDOM.render) -->
+  <script type="text/babel" src="/static/js/SatelliteMap.js"></script>
+
+  <!-- Connection Status Charts -->
+  <script>
+    // Create the connection status charts using Plotly
+    function createConnectionCharts() {
+      {% if info["monitor_stable_nodes"] %}
+      // Stable nodes chart
+      const stableTraceFail = {
+        x: {{ info["stats_dates"]|tojson }},
+        y: {{ info["stats_stable_fail"]|tojson }},
+        name: 'Failed',
+        type: 'scatter',
+        fill: 'tonexty',
+        line: { color: '#ff7f7f' }
+      };
+      const stableTraceOk = {
+        x: {{ info["stats_dates"]|tojson }},
+        y: {{ info["stats_stable_ok"]|tojson }},
+        name: 'Success',
+        type: 'scatter',
+        fill: 'tonexty',
+        line: { color: '#90ee90' }
+      };
+      const stableLayout = {
+        showlegend: true,
+        height: 200,
+        margin: { t: 10, b: 30, l: 40, r: 10 }
+      };
+      Plotly.newPlot('stable-nodes-chart', [stableTraceFail, stableTraceOk], stableLayout);
+      {% endif %}
+
+      // Dynamic nodes chart
+      const dynamicTraceFail = {
+        x: {{ info["stats_dates"]|tojson }},
+        y: {{ info["stats_dynamic_fail"]|tojson }},
+        name: 'Failed',
+        type: 'scatter',
+        fill: 'tonexty',
+        line: { color: '#ff7f7f' }
+      };
+      const dynamicTraceOk = {
+        x: {{ info["stats_dates"]|tojson }},
+        y: {{ info["stats_dynamic_ok"]|tojson }},
+        name: 'Success',
+        type: 'scatter',
+        fill: 'tonexty',
+        line: { color: '#90ee90' }
+      };
+      const dynamicLayout = {
+        showlegend: true,
+        height: 200,
+        margin: { t: 10, b: 30, l: 40, r: 10 }
+      };
+      Plotly.newPlot('dynamic-nodes-chart', [dynamicTraceFail, dynamicTraceOk], dynamicLayout);
+    }
+
+    document.addEventListener('DOMContentLoaded', createConnectionCharts);
+
+    // Handle collapsible section icon rotation
+    document.querySelectorAll('.section-header').forEach((header) => {
+      header.addEventListener('click', () => {
+        const icon = header.querySelector('.collapse-icon');
+        if (header.classList.contains('collapsed')) {
+          icon.style.transform = 'rotate(0deg)';
+        } else {
+          icon.style.transform = 'rotate(-90deg)';
         }
-
-        // Initialize charts when page loads
-        document.addEventListener('DOMContentLoaded', createConnectionCharts);
-
-        // Handle collapsible sections
-        document.querySelectorAll('.section-header').forEach(header => {
-            header.addEventListener('click', () => {
-                const icon = header.querySelector('.collapse-icon');
-                if (header.classList.contains('collapsed')) {
-                    icon.style.transform = 'rotate(0deg)';
-                } else {
-                    icon.style.transform = 'rotate(-90deg)';
-                }
-            });
-        });
-    </script>
+      });
+    });
+  </script>
 </body>
 </html>
