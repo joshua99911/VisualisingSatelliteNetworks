@@ -63,20 +63,23 @@ def annotate_graph(graph: networkx.Graph):
         node["vtysh"] = create_vtysh_config(name)
         node["daemons"] = create_daemons_config()
 
-    # Generate ip link pool information for the ground stations
-    for name in torus_topo.ground_stations(graph):
-        node = graph.nodes[name]
-        uplinks = []
-        for i in range(4):
-            ip = 0x0A0F0000 + count * 4
-            count += 1
-            nw_link = ipaddress.IPv4Network((ip, 30))
-            ips = list(nw_link.hosts())
-            uplink = {"nw": nw_link,
-                      "ip1": ipaddress.IPv4Interface((ips[0].packed, 30)),
-                      "ip2": ipaddress.IPv4Interface((ips[1].packed, 30))}
-            uplinks.append(uplink)
-        node["uplinks"] = uplinks
+    #Generate ip link pool information for both ground stations and vessels
+    for node_type in [torus_topo.ground_stations, torus_topo.vessels]:
+        for name in node_type(graph):
+            node = graph.nodes[name]
+            print(node) #CHANGE REMOVE DEBUG
+            uplinks = []
+            for i in range(4):
+                ip = 0x0A0F0000 + count * 4
+                count += 1
+                nw_link = ipaddress.IPv4Network((ip, 30))
+                ips = list(nw_link.hosts())
+                uplink = {"nw": nw_link,
+                          "ip1": ipaddress.IPv4Interface((ips[0].packed, 30)),
+                          "ip2": ipaddress.IPv4Interface((ips[1].packed, 30))}
+                uplinks.append(uplink)
+            node["uplinks"] = uplinks
+
 
 
 OSPF_TEMPLATE = """

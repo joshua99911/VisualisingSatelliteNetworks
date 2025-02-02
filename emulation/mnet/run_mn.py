@@ -68,10 +68,12 @@ def configure_dns(net, graph):
             hosts_entries.add(f"{format(local_ip.ip)}\t{local_intf} {name}-TO-{neighbor}")
             hosts_entries.add(f"{format(remote_ip.ip)}\t{remote_intf} {neighbor}-TO-{name}")
 
-    for name in torus_topo.ground_stations(graph):
-        node = graph.nodes[name]
-        if "ip" in node:
-            hosts_entries.add(f"{format(node['ip'].ip)}\t{name}")
+    # Handle both ground stations and vessels
+    for node_type in [torus_topo.ground_stations, torus_topo.vessels]:
+        for name in node_type(graph):
+            node = graph.nodes[name]
+            if "ip" in node:
+                hosts_entries.add(f"{format(node['ip'].ip)}\t{name}")
 
     hosts_content = "\n".join([
         "127.0.0.1\tlocalhost",
@@ -168,7 +170,7 @@ def signal_handler(sig, frame):
     cleanup_network()
     sys.exit(0)
 
-def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stations, enable_monitoring, ground_station_data):
+def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stations, enable_monitoring, ground_station_data, vessel_data):
     '''
     Execute the simulation of an FRR router network in a torus topology using Mininet.
     '''
@@ -179,7 +181,7 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stati
         ensure_clean_state()
         
         # Create and configure network
-        graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data)
+        graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data, vessel_data)
         frr_config_topo.annotate_graph(graph)
         topo = frr_topo.NetxTopo(graph)
 
@@ -253,6 +255,18 @@ if __name__ == "__main__":
             lat, lon = map(float, coords.split(','))
             ground_station_data[name] = (lat, lon)
 
+    # Add vessel data parsing
+    vessel_data = {}
+    if 'vessels' in parser:
+        for name, waypoint_str in parser['vessels'].items():
+            # Parse waypoint string into list of tuples
+            # Format in config: lat1,lon1;lat2,lon2;lat3,lon3
+            waypoints = []
+            for waypoint in waypoint_str.split(';'):
+                lat, lon = map(float, waypoint.split(','))
+                waypoints.append((lat, lon))
+            vessel_data[name] = waypoints
+
     num_rings = parser['network'].getint('rings', 4)
     num_routers = parser['network'].getint('routers', 4)
     ground_stations = parser['network'].getboolean('ground_stations', False)
@@ -263,4 +277,4 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     setLogLevel("info")
-    run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stations, enable_monitoring, ground_station_data)
+    run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stations, enable_monitoring, ground_station_data, vessel_data)

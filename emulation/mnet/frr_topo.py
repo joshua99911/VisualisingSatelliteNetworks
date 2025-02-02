@@ -75,14 +75,14 @@ class RouteNode(mininet.node.Node):
 
     def config(self, **params):
         '''
-Configure the node and create a loopback interface if needed.
+        Configure the node and create a loopback interface if needed.
 
-Args:
-    params (dict): Configuration parameters, including `ip` for setting a default IP address.
+        Args:
+            params (dict): Configuration parameters, including `ip` for setting a default IP address.
 
-Creates:
-    - A loopback interface if no matching interface is found for the specified IP.
-'''
+        Creates:
+            - A loopback interface if no matching interface is found for the specified IP.
+        '''
 
         # If we have a default IP and it is not an existing interface, create a
         # loopback.
@@ -508,17 +508,17 @@ class NetxTopo(mininet.topo.Topo):
         self.graph = graph
         self.routers: list[FrrRouter] = []
         self.ground_stations: list[GroundStation] = []
+        self.vessels: list[Vessel] = []  # Add vessels list
         super().__init__()
 
     def build(self, *args, **params):
         '''
-        Construct the Mininet topology based on the `networkx.Graph` structure.
+        Construct the Mininet topology based on the networkx.Graph structure.
 
         Creates:
             - Mininet hosts for routers and ground stations.
             - Links between nodes based on the graph edges.
         '''
-
         # Create routers
         for name in torus_topo.satellites(self.graph):
             node = self.graph.nodes[name]
@@ -541,6 +541,7 @@ class NetxTopo(mininet.topo.Topo):
                 daemons=node["daemons"]
             )
 
+        # Handle ground stations
         for name in torus_topo.ground_stations(self.graph):
             node = self.graph.nodes[name]
             ip = node.get("ip")
@@ -550,16 +551,28 @@ class NetxTopo(mininet.topo.Topo):
                 ip_intf = format(ip)
                 ip_addr = format(ip.ip)
             self.addHost(name, cls=RouteNode, ip=ip_intf)
-
             station = GroundStation(name, ip_addr, node["uplinks"])
             self.ground_stations.append(station)
+
+        # Handle vessels
+        for name in torus_topo.vessels(self.graph):
+            node = self.graph.nodes[name]
+            ip = node.get("ip")
+            ip_intf = None
+            ip_addr = None
+            if ip is not None:
+                ip_intf = format(ip)
+                ip_addr = format(ip.ip)
+            self.addHost(name, cls=RouteNode, ip=ip_intf)
+            vessel = Vessel(name, ip_addr, node["uplinks"])
+            self.vessels.append(vessel)
 
         # Create links between routers
         for name, edge in self.graph.edges.items():
             router1 = name[0]
             router2 = name[1]
 
-            # Handle incomplete edged
+            # Handle incomplete edges
             if edge.get("ip") is None:
                 self.addLink(router1, router2)
                 return
@@ -587,10 +600,10 @@ class FrrSimRuntime:
     '''
     def __init__(self, topo: NetxTopo, net: mininet.net.Mininet, stable_monitor: bool =False):
         self.graph = topo.graph
-
         self.nodes: dict[str, MNetNodeWrap] = {}
         self.routers: dict[str, FrrRouter] = {}
         self.ground_stations: dict[str, GroundStation] = {}
+        self.vessels: dict[str, Vessel] = {}
         self.stable_monitor = stable_monitor
 
         # Create monitoring DB file.
@@ -604,6 +617,9 @@ class FrrSimRuntime:
         for ground_station in topo.ground_stations:
             self.nodes[ground_station.name] = ground_station
             self.ground_stations[ground_station.name] = ground_station
+        for vessel in topo.vessels:  # Add vessels to nodes
+            self.nodes[vessel.name] = vessel
+            self.vessels[vessel.name] = vessel
 
         self.stat_samples = []
         self.net = net
@@ -627,8 +643,13 @@ class FrrSimRuntime:
         for router in self.routers.values():
             data.append((router.name, router.defaultIP(), router.stable_node()))
         # Not stable targets - don't monitor
+        #GroundStations
         for station in self.ground_stations.values():
             data.append((station.name, station.defaultIP(), station.stable_node()))
+        pmonitor.init_targets(self.db_file, data)
+        #Vessels
+        for vessel in self.vessels.values(): 
+            data.append((vessel.name, vessel.defaultIP(), vessel.stable_node()))  # <-- Add this
         pmonitor.init_targets(self.db_file, data)
 
         # Start all nodes
@@ -824,11 +845,16 @@ class FrrSimRuntime:
 
         return False, False
 
-    def set_station_uplinks(
-        self, station_name: str, uplinks: list[simapi.UpLink]) -> bool:
-        if not station_name in self.ground_stations:
+    def set_station_uplinks(self, station_name: str, uplinks: list[simapi.UpLink]) -> bool:
+        """Handle uplinks for both ground stations and vessels"""
+        # Check if it's a ground station or vessel
+        station = None
+        if station_name in self.ground_stations:
+            station = self.ground_stations[station_name]
+        elif station_name in self.vessels:
+            station = self.vessels[station_name]
+        else:
             return False
-        station = self.ground_stations[station_name]
 
         # Determine which links should be removed
         next_list = [uplink.sat_node for uplink in uplinks]
@@ -904,7 +930,14 @@ class FrrSimRuntime:
             cls=mininet.link.TCLink, 
         )
 
-        station = self.ground_stations[station_name]
+        # Get correct station object
+        if station_name in self.ground_stations:
+            station = self.ground_stations[station_name]
+        elif station_name in self.vessels:
+            station = self.vessels[station_name]
+        else:
+            raise ValueError(f"Unknown station {station_name}")
+
         frr_router = self.routers[sat_name]
 
         # Configure static route and OSPF
@@ -920,7 +953,7 @@ class FrrSimRuntime:
         # Add DNS entries for the uplink
         self._update_dns_for_uplink(station_name, sat_name, ip1, ip2, add=True)
 
-        # Add default route on ground station
+        # Add default route on station
         station_node = self.net.getNodeByName(station_name)
         if station_node is not None:
             route = f"via {format(ip2.ip)}"
@@ -973,4 +1006,13 @@ class FrrSimRuntime:
             print(f"set default route for {station.name} to {route}")
             if station_node is not None:
                 station_node.setDefaultRoute(route)
+
+class Vessel(GroundStation):
+    """
+    Represents a moving vessel that can connect to satellites.
+    Inherits from GroundStation for network connectivity.
+    """
+    def __init__(self, name: str, default_ip: str, uplinks: list[dict[str, typing.Any]]):
+        super().__init__(name, default_ip, uplinks)
+    
  

@@ -31,8 +31,14 @@ class GroundStationPosition(BaseModel):
     lat: float
     lon: float
 
-class SatellitePositions(BaseModel):
+class VesselPosition(BaseModel):
+    name: str
+    lat: float
+    lon: float
+
+class GraphData(BaseModel):
     satellites: list[SatellitePosition]
     ground_stations: list[GroundStationPosition]
+    vessels: list[VesselPosition]
     satellite_links: list[Link]
     ground_uplinks: list[UpLinks]

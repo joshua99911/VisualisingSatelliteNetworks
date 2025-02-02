@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 import networkx
 import datetime
+from typing import List, Tuple
 
 # Default network size
 NUM_RINGS = 40
@@ -16,14 +17,22 @@ NUM_RING_NODES = 40
 TYPE = "type"
 TYPE_SAT = "satellite"
 TYPE_GROUND = "ground_station"
+TYPE_VESSEL = "vessel"  # Add alongside TYPE_SAT and TYPE_GROUND
 LAT = "latitude"
 LON = "longitude"
+
+@dataclass
+class Waypoint:
+    """Represents a waypoint for a vessel's journey"""
+    lat: float
+    lon: float
 
 def create_network(
     num_rings: int = NUM_RINGS, 
     num_ring_nodes: int = NUM_RING_NODES, 
     ground_stations: bool = True, 
     ground_station_data: dict = None,
+    vessel_data: dict = None,  # Add vessel data parameter
     inclination: float = 53.9,
     altitude: float = 550
 ) -> networkx.Graph:
@@ -49,11 +58,34 @@ def create_network(
     if ground_stations and ground_station_data:
         add_ground_stations(graph, ground_station_data)
 
+    if vessel_data:
+        add_vessels(graph, vessel_data)
+
     # Set all edges to up
     for edge_name, edge in graph.edges.items():
         edge["up"] = True
     return graph
 
+def add_vessels(graph: networkx.Graph, vessel_data: dict) -> None:
+    '''
+    Add vessels to the graph using the provided vessel data.
+    Creates dummy links between vessels for Mininet configuration purposes.
+    '''
+    for name, waypoints in vessel_data.items():
+        graph.add_node(name)
+        node = graph.nodes[name]
+        node[TYPE] = TYPE_VESSEL
+        # Set initial position as first waypoint
+        if waypoints:
+            node[LAT] = waypoints[0][0]
+            node[LON] = waypoints[0][1]
+        # Store waypoints for movement
+        node["waypoints"] = waypoints
+
+    # Create edges between vessels (like ground stations)
+    vessel_names = list(vessel_data.keys())
+    for i in range(len(vessel_names) - 1):
+        graph.add_edge(vessel_names[i], vessel_names[i + 1])
 
 
 def ground_stations(graph: networkx.Graph) -> list[str]:
@@ -67,6 +99,15 @@ def ground_stations(graph: networkx.Graph) -> list[str]:
             result.append(name)
     return result
 
+def vessels(graph: networkx.Graph) -> list[str]:
+    '''
+    Return a list of all node names where the node is of type vessel
+    '''
+    result = []
+    for name in graph.nodes:
+        if graph.nodes[name][TYPE] == TYPE_VESSEL:
+            result.append(name)
+    return result
 
 def satellites(graph: networkx.Graph) -> list[str]:
     '''

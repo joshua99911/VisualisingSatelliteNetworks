@@ -5,7 +5,7 @@
  */
 
 // 1) Define your SatelliteIcon component (inline SVG, no exports)
-const SatelliteIcon = ({ size = 24, color = 'currentColor' }) => {
+const SatelliteIcon = ({ size = 12, color = 'currentColor' }) => {
   return (
     <svg
       width={size}
@@ -17,7 +17,6 @@ const SatelliteIcon = ({ size = 24, color = 'currentColor' }) => {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      {/* Satellite Path Data */}
       <path d="M13 7 9 3 5 7l4 4" />
       <path d="m17 11 4 4-4 4-4-4" />
       <path d="m8 12 4 4 6-6-4-4Z" />
@@ -27,8 +26,8 @@ const SatelliteIcon = ({ size = 24, color = 'currentColor' }) => {
   );
 };
 
-// 2) Define your GroundStationIcon component (inline SVG, no exports)
-const GroundStationIcon = ({ size = 24, color = 'currentColor' }) => {
+// 2) Define your GroundStationIcon component
+const GroundStationIcon = ({ size = 12, color = 'currentColor' }) => {
   return (
     <svg
       width={size}
@@ -40,7 +39,6 @@ const GroundStationIcon = ({ size = 24, color = 'currentColor' }) => {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      {/* Ground Station Path Data*/}
       <path d="M4 10a7.31 7.31 0 0 0 10 10Z"/>
       <path d="m9 15 3-3"/>
       <path d="M17 13a6 6 0 0 0-6-6"/>
@@ -49,13 +47,36 @@ const GroundStationIcon = ({ size = 24, color = 'currentColor' }) => {
   );
 };
 
-// 3) Define the main SatelliteMap component (no exports)
+// 3) Define ShipIcon component
+const ShipIcon = ({ size = 12, color = 'currentColor' }) => {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={color}
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2 21c.6.5 1.2 1 2.4 1 2.4 0 2.4-1 4.8-1 2.4 0 2.4 1 4.8 1 2.4 0 2.4-1 4.8-1 1.2 0 1.8.5 2.4 1"/>
+      <path d="M4 19l-2 2"/>
+      <path d="M22 19l-2 2"/>
+      <path d="M12 6H8v5c0 1 .5 2 2 2s2-1 2-2z"/>
+      <path d="M16 8h0M4 15l16 .01M20 16.01L12 16"/>
+      <path d="M12 10v6"/>
+      <path d="M12 3v3"/>
+    </svg>
+  );
+};
+// 4) Define the main SatelliteMap component
 function SatelliteMap() {
   // === Dimensions ===
   const mapWidth = 800;
   const mapHeight = 400;
 
-  // Maximum zoom based on your original full-size map
+  // Maximum zoom based on original full-size map
   const originalImageWidth = 5400;
   const originalImageHeight = 2700;
   const MAX_SCALE = Math.max(
@@ -67,6 +88,7 @@ function SatelliteMap() {
   // === React State ===
   const [satellites, setSatellites] = React.useState([]);
   const [groundStations, setGroundStations] = React.useState([]);
+  const [vessels, setVessels] = React.useState([]);
   const [satelliteLinks, setSatelliteLinks] = React.useState([]);
   const [groundUplinks, setGroundUplinks] = React.useState([]);
 
@@ -89,8 +111,10 @@ function SatelliteMap() {
       try {
         const res = await fetch('/positions');
         const data = await res.json();
+        console.log("Received data:", data); // Debug log
         setSatellites(data.satellites || []);
         setGroundStations(data.ground_stations || []);
+        setVessels(data.vessels || []);
         setSatelliteLinks(data.satellite_links || []);
         setGroundUplinks(data.ground_uplinks || []);
       } catch (err) {
@@ -103,107 +127,7 @@ function SatelliteMap() {
     return () => clearInterval(interval);
   }, []);
 
-  // === Utility Functions ===
-
-  // Clamp
-  function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
-  }
-
-  // Convert lat/lon to x,y
-  function getNodeCoordinates(node) {
-    const x = ((node.lon + 180) / 360) * mapWidth;
-    const y = ((90 - node.lat) / 180) * mapHeight;
-    return [x, y];
-  }
-
-  // Determine if two satellites are in same plane (example logic)
-  function areInSamePlane(sat1Name, sat2Name) {
-    const ring1 = parseInt(sat1Name.split('_')[0].substring(1));
-    const ring2 = parseInt(sat2Name.split('_')[0].substring(1));
-    return ring1 === ring2;
-  }
-
-  // Find a node by name (satellite or ground station)
-  function findNode(name) {
-    return (
-      satellites.find((s) => s.name === name) ||
-      groundStations.find((g) => g.name === name)
-    );
-  }
-
-  // All connected nodes for a given nodeName
-  function getConnectedNodes(nodeName) {
-    const connections = new Set();
-
-    // Satellite-satellite
-    satelliteLinks.forEach((link) => {
-      if (link.up) {
-        if (link.node1_name === nodeName) {
-          connections.add(link.node2_name);
-        } else if (link.node2_name === nodeName) {
-          connections.add(link.node1_name);
-        }
-      }
-    });
-
-    // Ground station uplinks
-    groundUplinks.forEach((station) => {
-      if (station.ground_node === nodeName) {
-        station.uplinks.forEach((uplink) => connections.add(uplink.sat_node));
-      } else {
-        station.uplinks.forEach((uplink) => {
-          if (uplink.sat_node === nodeName) {
-            connections.add(station.ground_node);
-          }
-        });
-      }
-    });
-
-    return connections;
-  }
-
-  // Node click => open new page
-  function handleNodeClick(nodeName) {
-    const path = nodeName.startsWith('R') ? 'router' : 'station';
-    window.open(`/view/${path}/${nodeName}`, '_blank');
-  }
-
-  // === Mouse & Zoom Handlers ===
-  function handleWheel(e) {
-    e.preventDefault();
-    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = clamp(transform.scale * scaleFactor, MIN_SCALE, MAX_SCALE);
-
-    if (
-      (transform.scale === MAX_SCALE && scaleFactor > 1) ||
-      (transform.scale === MIN_SCALE && scaleFactor < 1)
-    ) {
-      return; // At zoom limit
-    }
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    // Zoom point in map coords
-    const zoomPointX = (mouseX - transform.x) / transform.scale;
-    const zoomPointY = (mouseY - transform.y) / transform.scale;
-
-    // New top-left
-    const newX = mouseX - zoomPointX * newScale;
-    const newY = mouseY - zoomPointY * newScale;
-
-    const maxX = mapWidth * (newScale - 1);
-    const maxY = mapHeight * (newScale - 1);
-
-    setTransform({
-      scale: newScale,
-      x: clamp(newX, -maxX, 0),
-      y: clamp(newY, -maxY, 0),
-    });
-  }
-
+  // === Mouse Handlers ===
   function handleMouseDown(e) {
     if (e.button === 0) {
       setIsDragging(true);
@@ -238,77 +162,103 @@ function SatelliteMap() {
     document.body.style.overflow = 'auto';
     setIsDragging(false);
   }
+// === Utility Functions ===
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
-  // === Render link lines ===
-  function renderLinks() {
-    const elements = [];
-    let keyCounter = 0;
+function getNodeCoordinates(node) {
+  const x = ((node.lon + 180) / 360) * mapWidth;
+  const y = ((90 - node.lat) / 180) * mapHeight;
+  return [x, y];
+}
 
-    function drawLink(node1Name, node2Name, color, opacity, k) {
-      const node1 = findNode(node1Name);
-      const node2 = findNode(node2Name);
-      if (!node1 || !node2) return;
+function areInSamePlane(sat1Name, sat2Name) {
+  const ring1 = parseInt(sat1Name.split('_')[0].substring(1));
+  const ring2 = parseInt(sat2Name.split('_')[0].substring(1));
+  return ring1 === ring2;
+}
 
-      const [x1, y1] = getNodeCoordinates(node1);
-      const [x2, y2] = getNodeCoordinates(node2);
-      const dx = x2 - x1;
-      const strokeWidth = 2 / transform.scale;
+// Find a node by name (satellite, ground station, or vessel)
+function findNode(name) {
+  return (
+    satellites.find((s) => s.name === name) ||
+    groundStations.find((g) => g.name === name) ||
+    vessels.find((v) => v.name === name)
+  );
+}
 
-      // Date-line wrap
-      if (Math.abs(dx) > mapWidth / 2) {
-        if (x1 < x2) {
-          elements.push(
-            <line
-              key={`${k}-left`}
-              x1={x1}
-              y1={y1}
-              x2={x2 - mapWidth}
-              y2={y2}
-              stroke={color}
-              strokeWidth={strokeWidth}
-              strokeOpacity={opacity}
-            />,
-            <line
-              key={`${k}-right`}
-              x1={x1 + mapWidth}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke={color}
-              strokeWidth={strokeWidth}
-              strokeOpacity={opacity}
-            />
-          );
-        } else {
-          elements.push(
-            <line
-              key={`${k}-left`}
-              x1={x1 - mapWidth}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke={color}
-              strokeWidth={strokeWidth}
-              strokeOpacity={opacity}
-            />,
-            <line
-              key={`${k}-right`}
-              x1={x1}
-              y1={y1}
-              x2={x2 + mapWidth}
-              y2={y2}
-              stroke={color}
-              strokeWidth={strokeWidth}
-              strokeOpacity={opacity}
-            />
-          );
+// All connected nodes for a given nodeName
+function getConnectedNodes(nodeName) {
+  const connections = new Set();
+
+  // Satellite-satellite
+  satelliteLinks.forEach((link) => {
+    if (link.up) {
+      if (link.node1_name === nodeName) {
+        connections.add(link.node2_name);
+      } else if (link.node2_name === nodeName) {
+        connections.add(link.node1_name);
+      }
+    }
+  });
+
+  // Ground station and vessel uplinks
+  groundUplinks.forEach((station) => {
+    if (station.ground_node === nodeName) {
+      station.uplinks.forEach((uplink) => connections.add(uplink.sat_node));
+    } else {
+      station.uplinks.forEach((uplink) => {
+        if (uplink.sat_node === nodeName) {
+          connections.add(station.ground_node);
         }
-      } else {
-        // Normal
+      });
+    }
+  });
+
+  return connections;
+}
+
+// Node click handler
+function handleNodeClick(nodeName) {
+  const path = nodeName.startsWith('R') ? 'router' : 
+              nodeName.startsWith('G_') ? 'station' : 
+              'vessel';
+  window.open(`/view/${path}/${nodeName}`, '_blank');
+}
+
+// === Render link lines ===
+function renderLinks() {
+  const elements = [];
+  let keyCounter = 0;
+
+  function drawLink(node1Name, node2Name, color, opacity, k) {
+    const node1 = findNode(node1Name);
+    const node2 = findNode(node2Name);
+    if (!node1 || !node2) return;
+
+    const [x1, y1] = getNodeCoordinates(node1);
+    const [x2, y2] = getNodeCoordinates(node2);
+    const dx = x2 - x1;
+    const strokeWidth = 2 / transform.scale;
+
+    // Date-line wrap handling
+    if (Math.abs(dx) > mapWidth / 2) {
+      if (x1 < x2) {
         elements.push(
           <line
-            key={k}
+            key={`${k}-left`}
             x1={x1}
+            y1={y1}
+            x2={x2 - mapWidth}
+            y2={y2}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeOpacity={opacity}
+          />,
+          <line
+            key={`${k}-right`}
+            x1={x1 + mapWidth}
             y1={y1}
             x2={x2}
             y2={y2}
@@ -317,200 +267,266 @@ function SatelliteMap() {
             strokeOpacity={opacity}
           />
         );
+      } else {
+        elements.push(
+          <line
+            key={`${k}-left`}
+            x1={x1 - mapWidth}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeOpacity={opacity}
+          />,
+          <line
+            key={`${k}-right`}
+            x1={x1}
+            y1={y1}
+            x2={x2 + mapWidth}
+            y2={y2}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeOpacity={opacity}
+          />
+        );
+      }
+    } else {
+      elements.push(
+        <line
+          key={k}
+          x1={x1}
+          y1={y1}
+          x2={x2}
+          y2={y2}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeOpacity={opacity}
+        />
+      );
+    }
+  }
+// If hovering a node, highlight just that node's connections
+if (hoveredNode) {
+  const connected = getConnectedNodes(hoveredNode);
+  connected.forEach((otherName) => {
+    const isGroundLink = 
+      hoveredNode.startsWith('G_') || 
+      hoveredNode.startsWith('V_') || 
+      otherName.startsWith('G_') || 
+      otherName.startsWith('V_');
+    const color = isGroundLink
+      ? '#ef4444'
+      : areInSamePlane(hoveredNode, otherName)
+      ? '#22c55e'
+      : '#1d4ed8';
+
+    drawLink(hoveredNode, otherName, color, 1, `hover-${keyCounter++}`);
+  });
+  return elements;
+}
+
+// Otherwise use toggles
+if (showInPlaneLinks || showCrossPlaneLinks) {
+  satelliteLinks.forEach((link, idx) => {
+    if (link.up) {
+      const inPlane = areInSamePlane(link.node1_name, link.node2_name);
+      if ((inPlane && showInPlaneLinks) || (!inPlane && showCrossPlaneLinks)) {
+        const color = inPlane ? '#22c55e' : '#1d4ed8';
+        drawLink(link.node1_name, link.node2_name, color, 0.5, `sat-${idx}`);
       }
     }
-
-    // If hovering a node, highlight just that node's connections
-    if (hoveredNode) {
-      const connected = getConnectedNodes(hoveredNode);
-      connected.forEach((otherName) => {
-        const isGroundLink =
-          hoveredNode.startsWith('G_') || otherName.startsWith('G_');
-        const color = isGroundLink
-          ? '#ef4444'
-          : areInSamePlane(hoveredNode, otherName)
-          ? '#22c55e'
-          : '#1d4ed8';
-
-        drawLink(hoveredNode, otherName, color, 1, `hover-${keyCounter++}`);
-      });
-      return elements;
-    }
-
-    // Otherwise use toggles
-    if (showInPlaneLinks || showCrossPlaneLinks) {
-      satelliteLinks.forEach((link, idx) => {
-        if (link.up) {
-          const inPlane = areInSamePlane(link.node1_name, link.node2_name);
-          if ((inPlane && showInPlaneLinks) || (!inPlane && showCrossPlaneLinks)) {
-            const color = inPlane ? '#22c55e' : '#1d4ed8';
-            drawLink(link.node1_name, link.node2_name, color, 0.5, `sat-${idx}`);
-          }
-        }
-      });
-    }
-
-    if (showGroundLinks) {
-      groundUplinks.forEach((station, sIdx) => {
-        station.uplinks.forEach((uplink, uIdx) => {
-          if (uplink) {
-            drawLink(
-              station.ground_node,
-              uplink.sat_node,
-              '#ef4444',
-              0.5,
-              `gs-${sIdx}-${uIdx}`
-            );
-          }
-        });
-      });
-    }
-
-    return elements;
-  }
-
-  // Pick which icon to use
-  function getIconComponent(node) {
-    if (node.name.startsWith('G_')) {
-      return GroundStationIcon;
-    }
-    return SatelliteIcon;
-  }
-
-// === Render all satellites & ground stations ===
-function renderNodes() {
-  const allNodes = [...groundStations, ...satellites];
-
-  return allNodes.map((node) => {
-    const [x, y] = getNodeCoordinates(node);
-    const isHovered = hoveredNode === node.name;
-
-    // Icon size
-    const iconSize = 24;
-
-    // Decide default color (satellite = blue, ground station = green, etc.)
-    const defaultColor = node.name.startsWith('G_') ? '#22c55e' : '#1d4ed8';
-    const hoverColor = 'red';  // or any other color
-    const iconColor = isHovered ? hoverColor : defaultColor;
-    const textColor = isHovered ? hoverColor : defaultColor;
-
-    // Pick icon component based on node type
-    const IconComponent = getIconComponent(node);
-
-    return (
-      <g
-        key={node.name}
-        /* 
-          Offset the entire <g> so the node's (x, y) is the icon center.
-          If iconSize=24, we subtract 12 (iconSize/2) from both x and y. 
-        */
-        transform={`translate(${x - iconSize / 2}, ${y - iconSize / 2})`}
-        style={{ cursor: 'pointer' }}
-        onMouseEnter={(e) => {
-          e.stopPropagation();
-          setHoveredNode(node.name);
-        }}
-        onMouseLeave={(e) => {
-          e.stopPropagation();
-          setHoveredNode(null);
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleNodeClick(node.name);
-        }}
-      >
-        {/* Render the inline SVG icon */}
-        <IconComponent size={iconSize} color={iconColor} />
-
-        {/* Label text to the right of the icon */}
-        <text
-          // Start this a little to the right of the icon
-          x={iconSize + 4}      
-          // Center it vertically relative to the icon
-          y={iconSize / 2}      
-          fontSize={12}
-          fill={textColor}
-          fontWeight="bold"
-          alignmentBaseline="middle"
-        >
-          {node.name}
-        </text>
-      </g>
-    );
   });
 }
 
-  // === Return JSX ===
-  return (
-    <div className="w-full max-w-4xl mt-4">
-      {/* Toggles */}
-      <div className="mb-4 flex gap-4">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={showInPlaneLinks}
-            onChange={(e) => setShowInPlaneLinks(e.target.checked)}
-          />
-          Show In-Plane Links
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={showCrossPlaneLinks}
-            onChange={(e) => setShowCrossPlaneLinks(e.target.checked)}
-          />
-          Show Cross-Plane Links
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={showGroundLinks}
-            onChange={(e) => setShowGroundLinks(e.target.checked)}
-          />
-          Show Ground Links
-        </label>
-      </div>
-
-      {/* The map container */}
-      <div
-        className="relative w-full h-96 border border-gray-200 rounded-lg overflow-hidden"
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseEnter={handleMapEnter}
-        onMouseLeave={handleMapLeave}
-      >
-        <svg
-          viewBox="0 0 800 400"
-          className="w-full h-full"
-          style={{ backgroundColor: '#f0f0f0' }}
-        >
-          <g
-            transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}
-          >
-            {/* Background image */}
-            <image
-              href="/static/images/worldmap.jpg"
-              x={0}
-              y={0}
-              width={mapWidth}
-              height={mapHeight}
-              preserveAspectRatio="none"
-            />
-
-            {/* Link lines */}
-            {renderLinks()}
-
-            {/* Node icons + labels */}
-            {renderNodes()}
-          </g>
-        </svg>
-      </div>
-    </div>
-  );
+if (showGroundLinks) {
+  groundUplinks.forEach((station, sIdx) => {
+    station.uplinks.forEach((uplink, uIdx) => {
+      if (uplink) {
+        drawLink(
+          station.ground_node,
+          uplink.sat_node,
+          '#ef4444',
+          0.5,
+          `gs-${sIdx}-${uIdx}`
+        );
+      }
+    });
+  });
 }
 
-// 4) Finally, render your SatelliteMap into #satellite-map
-// (Ensure you have <div id="satellite-map"></div> in your HTML)
+return elements;
+}
+
+// Pick which icon to use
+function getIconComponent(node) {
+if (node.name.startsWith('G_')) {
+  return GroundStationIcon;
+} else if (node.name.startsWith('V_')) {
+  return ShipIcon;
+}
+return SatelliteIcon;
+}
+
+// === Render all nodes ===
+function renderNodes() {
+console.log("Rendering nodes - Vessels:", vessels); // Debug log
+const allNodes = [...satellites, ...groundStations, ...vessels];
+
+return allNodes.map((node) => {
+  const [x, y] = getNodeCoordinates(node);
+  const isHovered = hoveredNode === node.name;
+  const iconSize = 12;
+
+  // Decide colors based on node type
+  const defaultColor = node.name.startsWith('G_') ? '#22c55e' : 
+                     node.name.startsWith('V_') ? '#1d4ed8' : 
+                     '#1d4ed8';
+  const hoverColor = 'red';
+  const iconColor = isHovered ? hoverColor : defaultColor;
+  const textColor = isHovered ? hoverColor : defaultColor;
+
+  // Pick icon component based on node type
+  const IconComponent = getIconComponent(node);
+
+  return (
+    <g
+      key={node.name}
+      transform={`translate(${x - iconSize / 2}, ${y - iconSize / 2})`}
+      style={{ cursor: 'pointer' }}
+      onMouseEnter={(e) => {
+        e.stopPropagation();
+        setHoveredNode(node.name);
+      }}
+      onMouseLeave={(e) => {
+        e.stopPropagation();
+        setHoveredNode(null);
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleNodeClick(node.name);
+      }}
+    >
+      <IconComponent size={iconSize} color={iconColor} />
+      <text
+        x={iconSize + 4}
+        y={iconSize / 2}
+        fontSize={12}
+        fill={textColor}
+        //fontWeight="bold"
+        alignmentBaseline="middle"
+      >
+        {node.name}
+      </text>
+    </g>
+  );
+});
+}
+// Handle wheel zoom
+function handleWheel(e) {
+  e.preventDefault();
+  const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+  const newScale = clamp(transform.scale * scaleFactor, MIN_SCALE, MAX_SCALE);
+
+  if (
+    (transform.scale === MAX_SCALE && scaleFactor > 1) ||
+    (transform.scale === MIN_SCALE && scaleFactor < 1)
+  ) {
+    return; // At zoom limit
+  }
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  // Zoom point in map coords
+  const zoomPointX = (mouseX - transform.x) / transform.scale;
+  const zoomPointY = (mouseY - transform.y) / transform.scale;
+
+  // New top-left
+  const newX = mouseX - zoomPointX * newScale;
+  const newY = mouseY - zoomPointY * newScale;
+
+  const maxX = mapWidth * (newScale - 1);
+  const maxY = mapHeight * (newScale - 1);
+
+  setTransform({
+    scale: newScale,
+    x: clamp(newX, -maxX, 0),
+    y: clamp(newY, -maxY, 0),
+  });
+}
+
+// === Return JSX ===
+return (
+  <div className="w-full max-w-4xl mt-4">
+    {/* Toggles */}
+    <div className="mb-4 flex gap-4">
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={showInPlaneLinks}
+          onChange={(e) => setShowInPlaneLinks(e.target.checked)}
+        />
+        Show In-Plane Links
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={showCrossPlaneLinks}
+          onChange={(e) => setCrossPlaneLinks(e.target.checked)}
+        />
+        Show Cross-Plane Links
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={showGroundLinks}
+          onChange={(e) => setShowGroundLinks(e.target.checked)}
+        />
+        Show Ground Links
+      </label>
+    </div>
+
+    {/* The map container */}
+    <div
+      className="relative w-full h-96 border border-gray-200 rounded-lg overflow-hidden"
+      onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseEnter={handleMapEnter}
+      onMouseLeave={handleMapLeave}
+    >
+      <svg
+        viewBox="0 0 800 400"
+        className="w-full h-full"
+        style={{ backgroundColor: '#f0f0f0' }}
+      >
+        <g
+          transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}
+        >
+          {/* Background image */}
+          <image
+            href="/static/images/worldmap.jpg"
+            x={0}
+            y={0}
+            width={mapWidth}
+            height={mapHeight}
+            preserveAspectRatio="none"
+          />
+
+          {/* Link lines */}
+          {renderLinks()}
+
+          {/* Node icons + labels */}
+          {renderNodes()}
+        </g>
+      </svg>
+    </div>
+  </div>
+);
+}
+
+// 5) Finally, render your SatelliteMap into #satellite-map
 ReactDOM.render(<SatelliteMap />, document.getElementById('satellite-map'));

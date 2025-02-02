@@ -33,7 +33,7 @@ class Client:
         except requests.exceptions.ConnectionError as e:
             print(e)
 
-    def update_positions(self, positions: simapi.SatellitePositions) -> None:
+    def update_positions(self, positions: simapi.GraphData) -> None:
         try:
             print("Sending satellite and ground station positions update")
             url = f"{self.url}/positions"

@@ -40,15 +40,18 @@ class NetxContext:
         self.lock = threading.Lock()
         self.satellite_positions = []
         self.ground_station_positions = []
-        self.satellite_links = []      # Store satellite-to-satellite links
-        self.ground_uplinks = []       # Store ground station uplinks
+        self.vessel_positions = []  # Add vessel positions list
+        self.satellite_links = []
+        self.ground_uplinks = []
 
     def update_satellite_positions(self, positions: List[simapi.SatellitePosition], 
                                  ground_positions: List[simapi.GroundStationPosition],
+                                 vessel_positions: List[simapi.VesselPosition],  # Add vessel positions
                                  sat_links: List[simapi.Link],
                                  ground_links: List[simapi.UpLinks]):
         self.satellite_positions = positions
         self.ground_station_positions = ground_positions
+        self.vessel_positions = vessel_positions  # Store vessel positions
         self.satellite_links = sat_links
         self.ground_uplinks = ground_links
 
@@ -270,16 +273,18 @@ def get_positions():
         return {
             "satellites": context.satellite_positions,
             "ground_stations": context.ground_station_positions,
+            "vessels": context.vessel_positions,
             "satellite_links": context.satellite_links,
             "ground_uplinks": context.ground_uplinks
         }
 
 @app.put("/positions")
-def update_positions(positions: simapi.SatellitePositions):
+def update_positions(positions: simapi.GraphData):
     with get_context() as context:
         context.update_satellite_positions(
             positions.satellites,
             positions.ground_stations,
+            positions.vessels,
             positions.satellite_links,
             positions.ground_uplinks
         )

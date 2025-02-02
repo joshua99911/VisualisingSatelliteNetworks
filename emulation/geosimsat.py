@@ -56,6 +56,76 @@ class GroundStation:
     name: str
     position: GeographicPosition
     uplinks: list[Uplink] = field(default_factory=list)
+    
+
+@dataclass
+class Waypoint:
+    """Represents a waypoint for a vessel's journey"""
+    lat: float
+    lon: float
+
+@dataclass
+class MovingStation(GroundStation):
+    '''Represents an instance of a moving station (vessel)'''
+    waypoints: list[Waypoint] = field(default_factory=list)
+    current_waypoint_index: int = 0
+    next_waypoint_index: int = 1
+    moving_forward: bool = True
+    SPEED: float = 1.0 #0.01  # degrees per update
+
+    def update_position(self) -> None:
+        """Update the vessel's position based on constant speed movement"""
+        if not self.waypoints or len(self.waypoints) < 2:
+            return
+
+        current_lat = float(self.position.latitude.degrees)
+        current_lon = float(self.position.longitude.degrees)
+        current_wp = self.waypoints[self.current_waypoint_index]
+        next_wp = self.waypoints[self.next_waypoint_index]
+
+        # Calculate direction vector
+        delta_lat = next_wp.lat - current_wp.lat
+        delta_lon = next_wp.lon - current_wp.lon
+        
+        # Normalize direction vector
+        distance = (delta_lat ** 2 + delta_lon ** 2) ** 0.5
+        if distance > 0:
+            move_lat = (delta_lat / distance) * self.SPEED
+            move_lon = (delta_lon / distance) * self.SPEED
+        else:
+            move_lat = move_lon = 0
+
+        # Update position
+        new_lat = current_lat + move_lat
+        new_lon = current_lon + move_lon
+
+        # Check if we've reached the next waypoint
+        new_distance = ((new_lat - next_wp.lat) ** 2 + (new_lon - next_wp.lon) ** 2) ** 0.5
+        if new_distance < self.SPEED:
+            # We've reached the waypoint, update indices
+            if self.moving_forward:
+                if self.next_waypoint_index == len(self.waypoints) - 1:
+                    # Reached last waypoint, reverse direction
+                    self.moving_forward = False
+                    self.current_waypoint_index = self.next_waypoint_index
+                    self.next_waypoint_index = self.current_waypoint_index - 1
+                else:
+                    # Move to next waypoint
+                    self.current_waypoint_index = self.next_waypoint_index
+                    self.next_waypoint_index += 1
+            else:
+                if self.next_waypoint_index == 0:
+                    # Reached first waypoint, reverse direction
+                    self.moving_forward = True
+                    self.current_waypoint_index = 0
+                    self.next_waypoint_index = 1
+                else:
+                    # Move to previous waypoint
+                    self.current_waypoint_index = self.next_waypoint_index
+                    self.next_waypoint_index -= 1
+
+        # Update the position using wgs84.latlon
+        self.position = wgs84.latlon(new_lat, new_lon)
 
 
 class SatSimulation:
@@ -77,6 +147,7 @@ class SatSimulation:
         self.min_altitude = SatSimulation.MIN_ALTITUDE
         self.zero_uplink_count = 0
         self.uplink_updates = 0
+        self.moving_stations: list[MovingStation] = []  # Changed from self.vessels
 
         for name in torus_topo.ground_stations(graph):
             node = graph.nodes[name]
@@ -92,10 +163,24 @@ class SatSimulation:
             satellite = Satellite(name, earth_satellite)
             self.satellites.append(satellite)
 
+        # Initialize vessels
+        for name in torus_topo.vessels(graph):
+            node = graph.nodes[name]
+            position = wgs84.latlon(node[torus_topo.LAT], node[torus_topo.LON])
+            # Convert tuple waypoints to Waypoint objects
+            waypoints = [Waypoint(lat=wp[0], lon=wp[1]) for wp in node["waypoints"]]
+            moving_station = MovingStation(
+                name=name,
+                position=position,
+                waypoints=waypoints  # Now passing a list of Waypoint objects
+            )
+            self.moving_stations.append(moving_station)   
+
     def updatePositions(self, future_time: datetime.datetime):
         sfield_time = self.ts.from_datetime(future_time)
         positions = []
         ground_positions = []
+        vessel_positions = []
 
         # Update satellite positions
         for satellite in self.satellites:
@@ -123,6 +208,16 @@ class SatSimulation:
             )
             ground_positions.append(ground_pos)
 
+        # Update moving station positions
+        for station in self.moving_stations:
+            station.update_position()  # Add this line to update vessel positions
+            vessel_pos = simapi.VesselPosition(
+                name=station.name,
+                lat=float(station.position.latitude.degrees),
+                lon=float(station.position.longitude.degrees)
+            )
+            vessel_positions.append(vessel_pos)
+
         # Collect satellite-to-satellite links
         satellite_links = []
         for node1, node2 in self.graph.edges():
@@ -134,9 +229,10 @@ class SatSimulation:
                     up=status
                 ))
 
-        # Collect ground station uplinks
+        # Collect both ground station and vessel uplinks
         ground_uplinks = []
-        for station in self.ground_stations:
+        all_stations = self.ground_stations + self.moving_stations
+        for station in all_stations:
             uplinks_list = []
             for uplink in station.uplinks:
                 uplinks_list.append(simapi.UpLink(
@@ -150,9 +246,10 @@ class SatSimulation:
                 ))
             
         # Send position updates to API
-        data = simapi.SatellitePositions(
+        data = simapi.GraphData(
             satellites=positions,
             ground_stations=ground_positions,
+            vessels=vessel_positions,
             satellite_links=satellite_links,
             ground_uplinks=ground_uplinks
         )
@@ -175,24 +272,27 @@ class SatSimulation:
         zero_uplinks: bool = False
 
         sfield_time = self.ts.from_datetime(future_time)
-        for ground_station in self.ground_stations:
-            ground_station.uplinks = [] 
+        # Combined list for both types of stations
+        all_stations = self.ground_stations + self.moving_stations
+        
+        for station in all_stations:
+            station.uplinks = [] 
             for satellite in self.satellites:
                 # Calculate az for close satellites
-                if SatSimulation.nearby(ground_station, satellite):
-                    difference = satellite.earth_sat - ground_station.position
+                if SatSimulation.nearby(station, satellite):
+                    difference = satellite.earth_sat - station.position
                     topocentric = difference.at(sfield_time)
                     alt, az, d = topocentric.altaz()
                     if alt.degrees > self.min_altitude:
-                        uplink = Uplink(satellite.name, ground_station.name, d.km)
-                        ground_station.uplinks.append(uplink)
+                        uplink = Uplink(satellite.name, station.name, d.km)
+                        station.uplinks.append(uplink)
                         print(f"{satellite.name} Lat: {satellite.lat}, Lon: {satellite.lon}")
-                        print(f"{ground_station.name} Lat: {ground_station.position.latitude}, Lon: {ground_station.position.longitude}")
-                        print(f"ground {ground_station.name}, sat {satellite.name}: {alt}, {az}, {d.km}")
-            if len(ground_station.uplinks) == 0:
+                        print(f"{station.name} Lat: {station.position.latitude}, Lon: {station.position.longitude}")
+                        print(f"ground/vessel {station.name}, sat {satellite.name}: {alt}, {az}, {d.km}")
+            if len(station.uplinks) == 0:
                 zero_uplinks = True
-        if zero_uplinks:
-            self.zero_uplink_count += 1
+            if zero_uplinks:
+                self.zero_uplink_count += 1
             
 
     def updateInterPlaneStatus(self):
@@ -215,11 +315,18 @@ class SatSimulation:
                     if self.graph.edges[satellite.name, neighbor]["inter_ring"]:
                         self.client.set_link_state(satellite.name, neighbor, satellite.inter_plane_status)
         
-        for ground_station in self.ground_stations:
+        # for ground_station in self.ground_stations:
+        #     links = []
+        #     for uplink in ground_station.uplinks:
+        #         links.append((uplink.satellite_name, int(uplink.distance)))
+        #     self.client.set_uplinks(ground_station.name, links)
+        
+        all_stations = self.ground_stations + self.moving_stations
+        for station in all_stations:
             links = []
-            for uplink in ground_station.uplinks:
+            for uplink in station.uplinks:
                 links.append((uplink.satellite_name, int(uplink.distance)))
-            self.client.set_uplinks(ground_station.name, links)
+            self.client.set_uplinks(station.name, links)
 
     def run(self):
         current_time = datetime.datetime.now(tz=datetime.timezone.utc)
@@ -249,7 +356,7 @@ class SatSimulation:
             current_time = future_time
 
 
-def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, calc_only: bool, ground_station_data: dict) -> None:
+def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, calc_only: bool, ground_station_data: dict, vessel_data: dict = None) -> None:
     '''
     Simulate physical positions of satellites.
 
@@ -259,7 +366,7 @@ def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, c
     min_alt: Minimum angle (degrees) above horizon needed to connect to the satellite
     calc_only: If True, only loop quicky dumping results to the screen
     '''
-    graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data, inclination, altitude)
+    graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data, vessel_data, inclination, altitude)
     sim: SatSimulation = SatSimulation(graph)
     sim.min_altitude = min_alt
     sim.calc_only = calc_only
@@ -301,6 +408,17 @@ if __name__ == "__main__":
     else:
         print("Ground Stations False")
 
+    vessel_data = {}
+    if 'vessels' in parser:
+        print("Vessels True")
+        for name, waypoint_str in parser['vessels'].items():
+            waypoints = []
+            for waypoint in waypoint_str.split(';'):
+                lat, lon = map(float, waypoint.split(','))
+                waypoints.append((lat, lon))
+            vessel_data[name] = waypoints
+    else:
+        print("Vessels False")
 
     num_rings = parser['network'].getint('rings', 4)
     num_routers = parser['network'].getint('routers', 4)
@@ -313,5 +431,5 @@ if __name__ == "__main__":
 
 
     print(f"Running {num_rings} rings with {num_routers} per ring, ground stations {ground_stations}")
-    run(num_rings, num_routers, ground_stations, min_alt, calc_only, ground_station_data)
+    run(num_rings, num_routers, ground_stations, min_alt, calc_only, ground_station_data, vessel_data)
 
