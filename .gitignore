@@ -1,5 +1,5 @@
+# Python artifacts
 __pycache__/
-site/
 *.py[cod]
 .env
 .venv
@@ -10,3 +10,16 @@ cache/
 *.sqlite
 *.swp
 *.pcap
+site/
+
+# Node.js dependencies and build outputs
+node_modules/
+**/node_modules/
+
+# Ignore the npm build output directory for the frontend bundle
+emulation/mnet/static/js/dist/
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

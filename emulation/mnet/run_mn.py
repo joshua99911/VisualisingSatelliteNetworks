@@ -1,9 +1,9 @@
 #!/usr/bin/python3
-
 '''
-Run a mininet instance of FRR routers in a torus topology with namespace-aware traffic capture.
+Run a Mininet instance of FRR routers in a torus topology with namespace‐aware traffic capture.
 Includes improved cleanup and process management.
 '''
+
 import configparser
 import signal
 import sys
@@ -22,34 +22,26 @@ from emulation import torus_topo
 from emulation import frr_config_topo
 from emulation.mnet import frr_topo
 
-# Global variable for Mininet instance
+# Global variables for the simulation and webpack process
 net = None
 frrt = None
+webpack_process = None  # Will hold the process running "npm run watch"
 
 def ensure_clean_state():
     """
-    Ensure clean state before starting a new instance
+    Ensure clean state before starting a new instance.
     """
     print("Ensuring clean state before starting...")
-    # Kill any remaining FRR processes
     os.system('pkill -f "watchfrr|zebra|ospfd|staticd"')
-    
-    # Remove all network namespaces
     os.system('ip -all netns delete')
-    
-    # Clean up any remaining veth pairs
     os.system('ip link show | grep veth | cut -d"@" -f1 | while read veth; do ip link delete $veth 2>/dev/null; done')
-    
-    # Remove any stale FRR files
     os.system('rm -rf /tmp/frr.* /tmp/zebra.* /tmp/ospfd.*')
-    
-    # Wait for cleanup to complete
     time.sleep(2)
 
 def configure_dns(net, graph):
     '''
     Configure DNS for all nodes in the network by updating /etc/hosts
-    in each node's namespace. Ensure compatibility with altered hosts file.
+    in each node's namespace.
     '''
     hosts_entries = set()  # Use a set to avoid duplicates
 
@@ -68,7 +60,6 @@ def configure_dns(net, graph):
             hosts_entries.add(f"{format(local_ip.ip)}\t{local_intf} {name}-TO-{neighbor}")
             hosts_entries.add(f"{format(remote_ip.ip)}\t{remote_intf} {neighbor}-TO-{name}")
 
-    # Handle both ground stations and vessels
     for node_type in [torus_topo.ground_stations, torus_topo.vessels]:
         for name in node_type(graph):
             node = graph.nodes[name]
@@ -131,7 +122,7 @@ def stop_packet_capture():
 
 def cleanup_network():
     '''
-    Cleanup network resources and processes
+    Cleanup network resources and processes.
     '''
     global net, frrt
     try:
@@ -153,7 +144,6 @@ def cleanup_network():
             print("Stopping Mininet...")
             net.stop()
             
-        # Final cleanup
         print("Performing final cleanup...")
         os.system('pkill -f "watchfrr|zebra|ospfd|staticd"')
         os.system('ip -all netns delete')
@@ -162,37 +152,46 @@ def cleanup_network():
     except Exception as e:
         print(f"Error during cleanup: {e}")
 
+def cleanup_webpack():
+    """
+    Terminate the webpack watch process if it is running.
+    """
+    global webpack_process
+    if webpack_process is not None:
+        try:
+            print("Terminating webpack watch process...")
+            webpack_process.terminate()
+            webpack_process.wait(timeout=10)
+        except Exception as e:
+            print(f"Error terminating webpack process: {e}")
+        webpack_process = None
+
 def signal_handler(sig, frame):
     '''
     Handle Ctrl+C for clean shutdown.
     '''
     print("\nCtrl-C received, shutting down...")
     cleanup_network()
+    cleanup_webpack()
     sys.exit(0)
 
 def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stations, enable_monitoring, ground_station_data, vessel_data):
     '''
-    Execute the simulation of an FRR router network in a torus topology using Mininet.
+    Execute the simulation of an FRR router network.
     '''
     global net, frrt
-    
     try:
-        # Ensure clean state before starting
         ensure_clean_state()
-        
-        # Create and configure network
         graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data, vessel_data)
         frr_config_topo.annotate_graph(graph)
         topo = frr_topo.NetxTopo(graph)
 
         if use_mnet:
-            # Backup original network configuration
             if os.path.exists('/etc/hosts'):
                 os.system('cp /etc/hosts /etc/hosts.mininet.bak')
             if os.path.exists('/etc/resolv.conf'):
                 os.system('cp /etc/resolv.conf /etc/resolv.conf.mininet.bak')
 
-            # Start Mininet
             net = Mininet(topo=topo)
             net.start()
             configure_dns(net, graph)
@@ -200,22 +199,19 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stati
             if enable_monitoring:
                 time.sleep(2)
 
-        # Initialize and start FRR
         frrt = frr_topo.FrrSimRuntime(topo, net, stable_monitors)
         print("Starting FRR routers...")
         frrt.start_routers()
-        time.sleep(2)  # Give routers time to initialize
+        time.sleep(2)
 
-        # Open terminals if needed
         if net is not None:
             nodes_to_open = ['G_LON', 'R0_0']
             for node_name in nodes_to_open:
                 node = net.get(node_name)
                 if node:
                     makeTerm(node, title=f'Terminal for {node.name}')
-                    print(f"Made Terminal for {node.name}")
+                    print(f"Opened terminal for {node.name}")
 
-        # Run CLI or driver
         if use_cli and net is not None:
             CLI(net)
         else:
@@ -228,9 +224,10 @@ def run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stati
         sys.exit(1)
     finally:
         cleanup_network()
+        cleanup_webpack()
 
 def usage():
-    print("Usage: python3 -m mnet.run_mn [--cli] [--no-mnet] [--monitor] <config_file>")
+    print("Usage: python3 -m emulation.mnet.run_mn [--cli] [--no-mnet] [--monitor] <config_file>")
 
 if __name__ == "__main__":
     use_cli = "--cli" in sys.argv
@@ -255,12 +252,9 @@ if __name__ == "__main__":
             lat, lon = map(float, coords.split(','))
             ground_station_data[name] = (lat, lon)
 
-    # Add vessel data parsing
     vessel_data = {}
     if 'vessels' in parser:
         for name, waypoint_str in parser['vessels'].items():
-            # Parse waypoint string into list of tuples
-            # Format in config: lat1,lon1;lat2,lon2;lat3,lon3
             waypoints = []
             for waypoint in waypoint_str.split(';'):
                 lat, lon = map(float, waypoint.split(','))
@@ -277,4 +271,14 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     setLogLevel("info")
+
+    # Start webpack in watch mode so that frontend changes are automatically built.
+    webpack_dir = os.path.join("emulation", "mnet", "static", "js")
+    try:
+        webpack_process = subprocess.Popen(["npm", "run", "watch"], cwd=webpack_dir)
+        print("Started webpack watch process in", webpack_dir)
+    except Exception as e:
+        print("Error starting webpack watch process:", e)
+        webpack_process = None
+
     run(num_rings, num_routers, use_cli, use_mnet, stable_monitors, ground_stations, enable_monitoring, ground_station_data, vessel_data)
