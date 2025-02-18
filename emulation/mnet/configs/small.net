@@ -11,7 +11,7 @@ ground_stations=yes
 stable_monitors=yes
 
 [physical]
-min_altitude=10
+min_elevation=10
 
 # Ground Stations Name = lat, lon
 [ground_stations]

@@ -135,7 +135,7 @@ class SatSimulation:
 
     # Time slice for simulation
     TIME_SLICE = 10
-    MIN_ALTITUDE = 35
+    MIN_ELEVATION = 35
 
     def __init__(self, graph: networkx.Graph):
         self.graph = graph
@@ -144,7 +144,7 @@ class SatSimulation:
         self.ground_stations: list[GroundStation] = []
         self.client: simclient.Client = simclient.Client("http://127.0.0.0:8000")
         self.calc_only = False
-        self.min_altitude = SatSimulation.MIN_ALTITUDE
+        self.min_elevation = SatSimulation.MIN_ELEVATION
         self.zero_uplink_count = 0
         self.uplink_updates = 0
         self.moving_stations: list[MovingStation] = []  # Changed from self.vessels
@@ -283,7 +283,7 @@ class SatSimulation:
                     difference = satellite.earth_sat - station.position
                     topocentric = difference.at(sfield_time)
                     alt, az, d = topocentric.altaz()
-                    if alt.degrees > self.min_altitude:
+                    if alt.degrees > self.min_elevation:
                         uplink = Uplink(satellite.name, station.name, d.km)
                         station.uplinks.append(uplink)
                         print(f"{satellite.name} Lat: {satellite.lat}, Lon: {satellite.lon}")
@@ -356,7 +356,7 @@ class SatSimulation:
             current_time = future_time
 
 
-def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, calc_only: bool, ground_station_data: dict, vessel_data: dict = None) -> None:
+def run(num_rings: int, num_routers: int, ground_stations: bool, min_elev: int, calc_only: bool, ground_station_data: dict, vessel_data: dict = None) -> None:
     '''
     Simulate physical positions of satellites.
 
@@ -368,7 +368,7 @@ def run(num_rings: int, num_routers: int, ground_stations: bool, min_alt: int, c
     '''
     graph = torus_topo.create_network(num_rings, num_routers, ground_stations, ground_station_data, vessel_data, inclination, altitude)
     sim: SatSimulation = SatSimulation(graph)
-    sim.min_altitude = min_alt
+    sim.min_elevation = min_elev
     sim.calc_only = calc_only
     sim.run()
 
@@ -425,7 +425,7 @@ if __name__ == "__main__":
     # Should ground stations be included in the network?
     ground_stations = parser['network'].getboolean('ground_stations', False)
     # Minimum angle above horizon needed to connect to satellites
-    min_alt = parser['physical'].getint('min_altitude', SatSimulation.MIN_ALTITUDE)
+    min_alt = parser['physical'].getint('min_elevation', SatSimulation.MIN_ELEVATION)
     inclination = parser['constellation'].getfloat('inclination', 53.9)
     altitude = parser['constellation'].getfloat('altitude', 550)
 
