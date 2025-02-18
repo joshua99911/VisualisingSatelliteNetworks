@@ -2,14 +2,17 @@ import datetime
 from contextlib import contextmanager
 import threading
 import time
-from typing import List
+from typing import List, Dict, Any
 
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+
+import sqlite3
 import uvicorn
 import mininet
 
@@ -289,6 +292,68 @@ def update_positions(positions: simapi.GraphData):
             positions.ground_uplinks
         )
     return {"status": "OK"}
+
+@app.get("/monitor/databases")
+def get_database_list():
+    """Get list of all monitoring databases"""
+    with get_context() as context:
+        databases = {
+            "master": context.frrt.db_file,
+            "nodes": {
+                name: node.working_db 
+                for name, node in context.frrt.nodes.items()
+            }
+        }
+        return databases
+
+@app.get("/monitor/data/{db_path:path}")
+def get_database_data(db_path: str):
+    """Get contents of a specific database"""
+    try:
+        # Connect to database
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Get column names
+        cursor.execute("PRAGMA table_info(targets);")
+        columns = [col[1] for col in cursor.fetchall()]
+        
+        # Get all data
+        cursor.execute("SELECT * FROM targets;")
+        rows = cursor.fetchall()
+        
+        # Convert to list of dicts for better JSON serialization
+        data = []
+        for row in rows:
+            row_dict = {}
+            for i, col in enumerate(columns):
+                row_dict[col] = row[i]
+            data.append(row_dict)
+            
+        # Get some statistics
+        cursor.execute("SELECT COUNT(*) FROM targets WHERE responded = TRUE")
+        responding = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM targets")
+        total = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return {
+            "columns": columns,
+            "data": data,
+            "stats": {
+                "total": total,
+                "responding": responding,
+                "response_rate": (responding/total * 100) if total > 0 else 0
+            }
+        }
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to read database: {str(e)}"}
+        )
 
 
 def invoke_shutdown():

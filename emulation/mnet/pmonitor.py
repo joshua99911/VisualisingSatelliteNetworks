@@ -399,6 +399,65 @@ Logs:
     print(f"status {good} / {total}")
     return True
 
+def consolidate_databases(master_db: str, working_dbs: list[str], output_path: str):
+    """
+    Consolidate master and working databases into a single analysis database
+    """
+    # Create new consolidated database
+    create_db(output_path)
+    output_db = sqlite3.connect(output_path)
+    
+    # Add simulation metadata table
+    output_db.execute('''
+        CREATE TABLE simulation_metadata (
+            start_time TIMESTAMP,
+            end_time TIMESTAMP,
+            total_nodes INTEGER,
+            stable_nodes INTEGER
+        )
+    ''')
+    
+    # Add node_history table for working db data
+    output_db.execute('''
+        CREATE TABLE node_history (
+            node_name TEXT,
+            sample_time TIMESTAMP,
+            responded BOOLEAN,
+            total_count INTEGER,
+            total_success INTEGER,
+            source_node TEXT
+        )
+    ''')
+    
+    # Copy master database target information
+    master = sqlite3.connect(master_db)
+    output_db.execute("ATTACH DATABASE ? AS master", (master_db,))
+    output_db.execute("CREATE TABLE targets AS SELECT * FROM master.targets")
+    output_db.execute("DETACH master")
+    
+    # Consolidate working databases
+    for working_db in working_dbs:
+        try:
+            output_db.execute("ATTACH DATABASE ? AS working", (working_db,))
+            node_name = output_db.execute("SELECT name FROM working.targets WHERE me = TRUE").fetchone()
+            if node_name:
+                output_db.execute("""
+                    INSERT INTO node_history 
+                    SELECT name, sample_time, responded, total_count, total_success, ? 
+                    FROM working.targets
+                    WHERE me = FALSE
+                """, (node_name[0],))
+            output_db.execute("DETACH working")
+        except sqlite3.Error as e:
+            print(f"Error processing {working_db}: {e}")
+    
+    # Add indexes for efficient querying
+    output_db.execute("CREATE INDEX idx_node_history_time ON node_history(sample_time)")
+    output_db.execute("CREATE INDEX idx_node_history_node ON node_history(node_name)")
+    
+    output_db.commit()
+    output_db.close()
+
 
 if __name__ == "__main__":
     # Arguments:

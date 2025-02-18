@@ -11,6 +11,8 @@ cache/
 *.swp
 *.pcap
 site/
+tools/
+captures/
 
 # Node.js dependencies and build outputs
 node_modules/
