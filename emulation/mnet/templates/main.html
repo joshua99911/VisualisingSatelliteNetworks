@@ -72,11 +72,11 @@
 
           <!-- Ground Stations Section -->
           <div class="section-container">
-            <h3 class="section-header d-flex align-items-center" data-bs-toggle="collapse" data-bs-target="#ground-stations-content">
+            <h3 class="section-header d-flex align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#ground-stations-content">
               <span class="collapse-icon me-2">▼</span>
               Ground Stations
             </h3>
-            <div id="ground-stations-content" class="collapse show">
+            <div id="ground-stations-content" class="collapse">
               <ul class="list-unstyled mt-3">
                 {% for entry in info["stations"] %}
                   <li class="mb-4">
@@ -111,11 +111,11 @@
 
           <!-- Routers Section -->
           <div class="section-container">
-            <h3 class="section-header d-flex align-items-center" data-bs-toggle="collapse" data-bs-target="#routers-content">
+            <h3 class="section-header d-flex align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#routers-content">
               <span class="collapse-icon me-2">▼</span>
               Routers ({{ info["routers"]|length }})
             </h3>
-            <div id="routers-content" class="collapse show">
+            <div id="routers-content" class="collapse">
               <ul class="list-unstyled mt-3">
                 {% for entry in info["routers"] %}
                   <li class="mb-3">
@@ -142,9 +142,16 @@
               </ul>
             </div>
           </div>
+          <!-- Database Monitor Section -->
           <div class="section-container">
-            <div id="database-monitor"></div>
-          </div
+            <h3 class="section-header d-flex align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#database-monitor-content">
+              <span class="collapse-icon me-2">▼</span>
+              Database Monitor
+            </h3>
+            <div id="database-monitor-content" class="collapse">
+              <div id="database-monitor"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
