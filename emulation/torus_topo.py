@@ -10,7 +10,11 @@ from typing import ClassVar
 import networkx
 import datetime
 from typing import List, Tuple
+from math import sqrt, pi
 
+# Physical constants
+EARTH_RADIUS = 6378.137  # Earth's radius in km
+MU = 398600.4418  # Earth's gravitational parameter in km³/s²
 # Default network size
 NUM_RINGS = 40
 NUM_RING_NODES = 40
@@ -125,7 +129,7 @@ def satellites(graph: networkx.Graph) -> list[str]:
 LINE1 = "1 {:05d}U 24067A   {:2d}{:012.8f}  .00009878  00000-0  47637-3 0  999"
 # Use a perigee of 297 (could just be 0). Canned data for orbit count, prbits per day,
 # and exccentricity
-LINE2 = "2 {:05d} {:8.4f} {:8.4f} 0003572 297.6243 {:8.4f} 15.33600000 6847"
+LINE2 = "2 {:05d} {:8.4f} {:8.4f} 0000000 000.0000 {:8.4f} 15.33600000 6847"
 
 
 @dataclass
@@ -133,13 +137,22 @@ class OrbitData:
     '''
     Records key orbital information
     '''
-
     right_ascension: float  # degrees
     inclination: float  # degrees
     mean_anomaly: float  # degrees
+    altitude: float  # kilometers
     cat_num: int = 0
 
     cat_num_count: ClassVar[int] = 1
+
+    def calculate_mean_motion(self) -> float:
+        """Calculate mean motion from altitude assuming circular orbit"""
+        # Calculate semi-major axis (radius from Earth's center)
+        semi_major_axis = EARTH_RADIUS + self.altitude
+        # Calculate mean motion in revolutions per day
+        # n = sqrt(μ/a³) * (86400/2π) for rev/day
+        mean_motion = sqrt(MU / (semi_major_axis ** 3)) * (86400 / (2 * pi))
+        return mean_motion
 
     def assign_cat_num(self) -> None:
         self.cat_num = OrbitData.cat_num_count
@@ -160,9 +173,17 @@ class OrbitData:
         year = time_tuple.tm_year % 1000 % 100
         day = time_tuple.tm_yday
         
+        mean_motion = self.calculate_mean_motion()
+        
         l1 = LINE1.format(self.cat_num, year, day, 342)
-        l2 = LINE2.format(
-            self.cat_num, self.inclination, self.right_ascension, self.mean_anomaly
+        # Modified to use calculated mean motion instead of hardcoded value 
+        # (changed eccentricity to zero and perigee undefined due to circular orbit)
+        l2 = "2 {:05d} {:8.4f} {:8.4f} 0000000 000.0000 {:8.4f} {:11.8f} 6847".format(
+            self.cat_num, 
+            self.inclination, 
+            self.right_ascension, 
+            self.mean_anomaly,
+            mean_motion
         )
         l1 = l1 + OrbitData.tle_check_sum(l1)
         l2 = l2 + OrbitData.tle_check_sum(l2)
@@ -193,7 +214,7 @@ def create_ring(graph: networkx.Graph, ring_num: int, num_ring_nodes: int) -> No
         # Offset 1/2 spacing for odd rings
         if ring_num % 2 == 1:
             mean_anomaly += 360 / num_ring_nodes / 2
-        orbit = OrbitData(right_ascension, inclination, mean_anomaly)
+        orbit = OrbitData(right_ascension, inclination, mean_anomaly, altitude)
         orbit.assign_cat_num()
         graph.nodes[node_name]["orbit"] = orbit
         graph.nodes[node_name]["altitude"] = altitude  # Add altitude to the node metadata

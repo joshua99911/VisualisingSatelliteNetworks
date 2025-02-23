@@ -203,16 +203,36 @@ def view_router(request: Request, node: str):
         router = context.frrt.get_router(node)
         status_list = context.frrt.get_node_status_list(node)
         ring_list = context.frrt.get_ring_list()
+
+        # Preserve existing link state transformation
         for neighbor in router["neighbors"]:
             intf1_state = intf_state(router["neighbors"][neighbor]["up"][0])
             intf2_state = intf_state(router["neighbors"][neighbor]["up"][1])
             router["neighbors"][neighbor]["up"] = (intf1_state, intf2_state)
 
+        # Initialize defaults for lat/lon/alt in case this router is not a satellite
+        router["lat"] = None
+        router["lon"] = None
+        router["height"] = None
+
+        # If this node is a satellite, find its lat/long/alt from context.satellite_positions
+        for sat in context.satellite_positions:
+            if sat.name == node:
+                router["lat"] = sat.lat
+                router["lon"] = sat.lon
+                router["height"] = sat.height
+                break
+
     return templates.TemplateResponse(
-        request=request,
         name="router.html",
-        context={"router": router, "ring_list": ring_list, "status_list": status_list},
+        context={
+            "request": request,
+            "router": router,
+            "ring_list": ring_list,
+            "status_list": status_list,
+        },
     )
+
 
 @app.get("/view/station/{name}", response_class=HTMLResponse)
 def view_station(request: Request, name: str):
