@@ -11,10 +11,12 @@ class Link(BaseModel):
     node1_name: str
     node2_name: str
     up: bool
+    delay: float = 1.0  # Default 1ms delay
 
 class UpLink(BaseModel):
     sat_node: str
     distance: int
+    delay: float = 1.0  # Default 1ms delay
 
 class UpLinks(BaseModel):
     ground_node: str

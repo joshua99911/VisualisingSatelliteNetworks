@@ -15,6 +15,7 @@ import configparser
 import sys
 import datetime
 import time
+import random
 
 from emulation import torus_topo
 from emulation import simclient
@@ -27,6 +28,32 @@ from skyfield.positionlib import Geocentric # type: ignore
 from skyfield.toposlib import GeographicPosition # type: ignore
 from skyfield.units import Angle, Distance # type: ignore
 
+
+
+def calculate_link_delay(distance_km: float) -> float:
+    '''
+    Calculate link delay based on distance.
+    
+    Args:
+        distance_km: Distance in kilometers between nodes
+        
+    Returns:
+        Delay in milliseconds
+        
+    The delay consists of:
+    - Propagation delay (speed of light through vacuum)
+    - Processing/equipment delay (fixed component)
+    '''
+    SPEED_OF_LIGHT = 299792.458  # km/s
+    PROCESSING_DELAY = 1  # ms (fixed component for equipment/processing)
+    
+    # Calculate propagation delay (distance/speed)
+    prop_delay = (distance_km / SPEED_OF_LIGHT) * 1000  # Convert to ms
+    
+    # Add fixed processing delay
+    total_delay = prop_delay + PROCESSING_DELAY
+    
+    return round(total_delay, 3)  # Round to 3 decimal places  
 
 @dataclass
 class Satellite:
@@ -49,6 +76,7 @@ class Uplink:
     satellite_name: str
     ground_name: str
     distance: int
+    delay: float = 1.0  # Default delay in milliseconds
 
 @dataclass
 class GroundStation:
@@ -132,10 +160,10 @@ class SatSimulation:
     '''
     Runs real time to update satellite positions
     '''
-
     # Time slice for simulation
     TIME_SLICE = 10
-    MIN_ELEVATION = 35
+    MIN_ELEVATION = 15
+
 
     def __init__(self, graph: networkx.Graph):
         self.graph = graph
@@ -263,6 +291,7 @@ class SatSimulation:
                 satellite.lon.degrees < ground_station.position.longitude.degrees + 20 and
                 satellite.lat.degrees > ground_station.position.latitude.degrees - 20 and 
                 satellite.lat.degrees < ground_station.position.latitude.degrees + 20)
+      
  
     def updateUplinkStatus(self, future_time: datetime.datetime):
         '''
@@ -276,7 +305,10 @@ class SatSimulation:
         all_stations = self.ground_stations + self.moving_stations
         
         for station in all_stations:
-            station.uplinks = [] 
+            # Keep track of existing uplinks but update their parameters
+            current_uplinks = {uplink.satellite_name: uplink for uplink in station.uplinks}
+            station.uplinks = []
+            
             for satellite in self.satellites:
                 # Calculate az for close satellites
                 if SatSimulation.nearby(station, satellite):
@@ -284,11 +316,23 @@ class SatSimulation:
                     topocentric = difference.at(sfield_time)
                     alt, az, d = topocentric.altaz()
                     if alt.degrees > self.min_elevation:
-                        uplink = Uplink(satellite.name, station.name, d.km)
+                        delay = calculate_link_delay(d.km)
+                        
+                        # Check if this is an existing uplink
+                        if satellite.name in current_uplinks:
+                            # Update existing uplink with new distance and delay
+                            uplink = current_uplinks[satellite.name]
+                            uplink.distance = d.km
+                            uplink.delay = delay
+                        else:
+                            # Create new uplink
+                            uplink = Uplink(satellite.name, station.name, d.km, delay=delay)
+                            
                         station.uplinks.append(uplink)
                         print(f"{satellite.name} Lat: {satellite.lat}, Lon: {satellite.lon}")
                         print(f"{station.name} Lat: {station.position.latitude}, Lon: {station.position.longitude}")
-                        print(f"ground/vessel {station.name}, sat {satellite.name}: {alt}, {az}, {d.km}")
+                        print(f"ground/vessel {station.name}, sat {satellite.name}: {alt}, {az}, {d.km}, delay: {delay}ms")
+                        
             if len(station.uplinks) == 0:
                 zero_uplinks = True
             if zero_uplinks:
@@ -325,7 +369,7 @@ class SatSimulation:
         for station in all_stations:
             links = []
             for uplink in station.uplinks:
-                links.append((uplink.satellite_name, int(uplink.distance)))
+                links.append((uplink.satellite_name, int(uplink.distance), uplink.delay))
             self.client.set_uplinks(station.name, links)
 
     def run(self):
