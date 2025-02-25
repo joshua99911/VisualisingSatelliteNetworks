@@ -856,21 +856,13 @@ class FrrSimRuntime:
         else:
             return False
 
-        # Determine which links should be removed
-        next_list = [uplink.sat_node for uplink in uplinks]
-        for sat_name in station.sat_links():
-            if sat_name not in next_list:
-                print(f"Remove uplink {station.name} - {sat_name}")
-                uplink = station.remove_uplink(sat_name)
-                self._remove_link(
-                        station_name, 
-                        sat_name, 
-                        uplink.ip_pool_entry.network,
-                        uplink.ip_pool_entry.ip1)
-
-        # Add any new links
+        # Update delays for existing links and track what we've seen
+        seen_links = set()
+        
+        # First add any new uplinks
         for link in uplinks:
             if not station.has_uplink(link.sat_node):
+                # Create new uplink
                 print(f"Add uplink {station.name}- {link.sat_node}")
                 uplink = station.add_uplink(link.sat_node, link.distance)
                 if uplink is not None:
@@ -880,9 +872,50 @@ class FrrSimRuntime:
                         uplink.ip_pool_entry.network,
                         uplink.ip_pool_entry.ip1,
                         uplink.ip_pool_entry.ip2,
+                        link.delay
+                    )
+            seen_links.add(link.sat_node)
+            # Update delay for the link whether it's new or existing
+            self.update_link_delay(station_name, link.sat_node, link.delay)
+
+        # Only try to remove links if we have existing uplinks
+        existing_links = station.sat_links()
+        if existing_links:
+            for sat_name in existing_links:
+                if sat_name not in seen_links:
+                    print(f"Remove uplink {station.name} - {sat_name}")
+                    uplink = station.remove_uplink(sat_name)
+                    if uplink:  # Make sure we have an uplink to remove
+                        self._remove_link(
+                            station_name, 
+                            sat_name, 
+                            uplink.ip_pool_entry.network,
+                            uplink.ip_pool_entry.ip1
                         )
+
         self._update_default_route(station)
         return True
+    
+    def update_link_delay(self, node1: str, node2: str, delay: float) -> None:
+        """
+        Update the delay on an existing link without recreating it.
+        
+        Args:
+            node1: First node name
+            node2: Second node name
+            delay: New delay in milliseconds
+        """
+        node1_obj = self.net.getNodeByName(node1)
+        node2_obj = self.net.getNodeByName(node2)
+        
+        if node1_obj and node2_obj:
+            links = self.net.linksBetween(node1_obj, node2_obj)
+            if links:
+                link = links[0]  # Get first link between nodes
+                # Update delay on both interfaces
+                link.intf1.config(delay=f"{delay}ms")
+                link.intf2.config(delay=f"{delay}ms")
+                print(f"Updated delay between {node1} and {node2} to {delay}ms")
 
     def _update_dns_for_uplink(self, station_name: str, sat_name: str, ip1: ipaddress.IPv4Interface, ip2: ipaddress.IPv4Interface, add: bool = True):
         '''
@@ -921,12 +954,13 @@ class FrrSimRuntime:
         ip_nw: ipaddress.IPv4Network,
         ip1: ipaddress.IPv4Interface,
         ip2: ipaddress.IPv4Interface,
+        delay: float = 1.0
     ):
-        # Create the link
+        # Create the link with the specified delay
         self.net.addLink(
             station_name, sat_name, 
-            params1={"ip": format(ip1), "delay": "1ms"}, 
-            params2={"ip": format(ip2), "delay": "1ms"},
+            params1={"ip": format(ip1), "delay": f"{delay}ms"}, 
+            params2={"ip": format(ip2), "delay": f"{delay}ms"},
             cls=mininet.link.TCLink, 
         )
 
@@ -961,22 +995,47 @@ class FrrSimRuntime:
 
 
     def _remove_link(self, station_name: str, sat_name: str, ip_nw: ipaddress.IPv4Network, ip: ipaddress.IPv4Interface) -> None:
+        """Remove a link between a station and a satellite"""
         station_node = self.net.getNodeByName(station_name)
         sat_node = self.net.getNodeByName(sat_name)
         
-        # Check if uplinks are available
-        if not self.ground_stations[station_name].uplinks:
-            raise ValueError(f"No uplinks exist for station {station_name}. Cannot remove link.")
-        
+        if not station_node or not sat_node:
+            print(f"Warning: Could not find nodes for {station_name} or {sat_name}")
+            return
+            
         # Remove DNS entries before removing the link
-        uplink = self.ground_stations[station_name].uplinks[0]  # Get the uplink to get IPs
-        self._update_dns_for_uplink(
-            station_name, 
-            sat_name, 
-            uplink.ip_pool_entry.ip1, 
-            uplink.ip_pool_entry.ip2, 
-            add=False
-    )
+        if station_name in self.ground_stations:
+            station = self.ground_stations[station_name]
+        elif station_name in self.vessels:
+            station = self.vessels[station_name]
+        else:
+            print(f"Warning: Unknown station type {station_name}")
+            return
+            
+        # Find the uplink if it exists
+        uplink = None
+        for u in station.uplinks:
+            if u.sat_name == sat_name:
+                uplink = u
+                break
+                
+        if uplink:
+            self._update_dns_for_uplink(
+                station_name, 
+                sat_name, 
+                uplink.ip_pool_entry.ip1, 
+                uplink.ip_pool_entry.ip2, 
+                add=False
+            )
+            
+            # Remove static route
+            frr_router = self.routers[sat_name]
+            frr_router.config_frr("staticd", [f"no ip route {station.defaultIP()}/32 {format(ip.ip)}"])
+            
+            # Remove the actual link
+            self.net.delLinkBetween(station_node, sat_node)
+        else:
+            print(f"Warning: No uplink found between {station_name} and {sat_name}")
 
         
         # Remove static route
