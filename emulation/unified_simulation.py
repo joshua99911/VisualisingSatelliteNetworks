@@ -15,6 +15,7 @@ import networkx
 import datetime
 
 from mininet.net import Mininet
+from mininet.term import makeTerm
 from mininet.log import setLogLevel, info
 from mininet.link import TCLink
 from fastapi import FastAPI, Request, BackgroundTasks
@@ -54,6 +55,73 @@ class VesselModel(BaseModel):
     waypoints: list[tuple[float, float]]
     ip: str = None
 
+
+def enhanced_cleanup():
+    '''
+    Thorough cleanup of all simulation resources.
+    Handles host files, FRR folders, network namespaces, and other resources.
+    '''
+    print("Performing thorough cleanup...")
+    
+    # 1. Kill all relevant processes
+    print("Stopping all related processes...")
+    os.system('pkill -f "watchfrr|zebra|ospfd|staticd|bgpd|isisd|pimd|ripd|ripngd|ldpd|nhrpd"')
+    os.system('pkill -f "dnsmasq"')  # Kill any running dnsmasq instances
+    os.system('pkill -f "tcpdump"')
+    
+    # 2. Restore host files if backups exist
+    print("Restoring host files...")
+    if os.path.exists('/etc/hosts.mininet.bak'):
+        os.system('cp /etc/hosts.mininet.bak /etc/hosts')
+        os.system('rm /etc/hosts.mininet.bak')
+        print("- Restored /etc/hosts")
+    
+    if os.path.exists('/etc/resolv.conf.mininet.bak'):
+        os.system('cp /etc/resolv.conf.mininet.bak /etc/resolv.conf')
+        os.system('rm /etc/resolv.conf.mininet.bak')
+        print("- Restored /etc/resolv.conf")
+    
+    # 3. Remove FRR folders
+    print("Removing FRR folders...")
+    os.system('rm -rf /etc/frr/R*')
+    os.system('rm -rf /etc/frr/G_*')
+    os.system('rm -rf /etc/frr/V_*')
+    os.system('rm -rf /var/log/frr/R*')
+    os.system('rm -rf /var/log/frr/G_*')
+    os.system('rm -rf /var/log/frr/V_*')
+    os.system('rm -rf /var/frr/R*')
+    os.system('rm -rf /var/frr/G_*')
+    os.system('rm -rf /var/frr/V_*')
+    os.system('rm -rf /tmp/frr.* /tmp/zebra.* /tmp/ospfd.*')
+    
+    # 4. Delete all network namespaces
+    print("Removing network namespaces...")
+    os.system('ip -all netns delete')
+    
+    # 5. Clean up any remaining veth interfaces
+    print("Removing veth interfaces...")
+    os.system('ip link show | grep veth | cut -d"@" -f1 | while read veth; do ip link delete $veth 2>/dev/null; done')
+    
+    # 6. Clean up OVS bridges if OVS is being used
+    print("Cleaning up OVS bridges...")
+    os.system('ovs-vsctl list-br | xargs -r -l ovs-vsctl del-br')
+    
+    # 7. Clean up any dnsmasq configuration
+    print("Cleaning up dnsmasq configuration...")
+    if os.path.exists('/tmp/dnsmasq.mininet.conf'):
+        os.system('rm /tmp/dnsmasq.mininet.conf')
+    if os.path.exists('/tmp/dnsmasq.mininet.hosts'):
+        os.system('rm /tmp/dnsmasq.mininet.hosts')
+    os.system('killall -9 dnsmasq 2>/dev/null')
+    
+    # 8. Restore iptables rules (if modified)
+    # print("Restoring iptables rules...")
+    # os.system('iptables -F')  # Uncomment if your simulation modified iptables
+    
+    # 9. Give a moment for everything to settle
+    time.sleep(2)
+    
+    print("Cleanup completed")
 
 class SimulationManager:
     '''
@@ -134,6 +202,51 @@ class SimulationManager:
         
         # Annotate the graph with network configuration
         frr_config_topo.annotate_graph(self.graph)
+
+    def open_xterm_for_node(self, node_name):
+        '''
+        Open an xterm window for a specific node.
+        
+        Args:
+            node_name: Name of the node
+        
+        Returns:
+            True if successful, False otherwise
+        '''
+        try:
+            node = self.net.getNodeByName(node_name)
+            if not node:
+                print(f"Error: Node {node_name} not found")
+                return False
+                
+            # Open xterm
+            makeTerm(node, title=f'Terminal for {node_name}')
+            print(f"Opened terminal for {node_name}")
+            return True
+        except Exception as e:
+            print(f"Error opening terminal for {node_name}: {str(e)}")
+            return False
+
+    def ping_between_nodes(self, source_node, target_node, count=3):
+        '''
+        Ping from one node to another using the correct namespace.
+        
+        Args:
+            source_node: Name of the source node
+            target_node: Name of the target node
+            count: Number of pings to send
+            
+        Returns:
+            Ping output
+        '''
+        try:
+            node = self.net.getNodeByName(source_node)
+            if not node:
+                return f"Error: Source node {source_node} not found"
+                
+            return node.cmd(f'ping -c {count} {target_node}')
+        except Exception as e:
+            return f"Error pinging: {str(e)}"
         
     def start_network_simulation(self):
         '''Start the Mininet network simulation and API server'''
@@ -198,6 +311,23 @@ class SimulationManager:
                 
                 background_tasks.add_task(add_vessel_task)
                 return {"status": "success", "name": vessel.name, "message": "Vessel addition started"}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+            
+        @app.post("/open_terminal")
+        async def open_terminal_endpoint(request: Request):
+            """API endpoint to open a terminal for a node"""
+            try:
+                data = await request.json()
+                node_name = data.get("node_name")
+                if not node_name:
+                    return {"status": "error", "message": "node_name is required"}
+                    
+                success = sim_manager.open_xterm_for_node(node_name)
+                if success:
+                    return {"status": "success", "message": f"Terminal opened for {node_name}"}
+                else:
+                    return {"status": "error", "message": f"Failed to open terminal for {node_name}"}
             except Exception as e:
                 return {"status": "error", "message": str(e)}
         
@@ -301,11 +431,32 @@ class SimulationManager:
             self.stop()
             
     def stop(self):
-        '''Stop the simulation'''
+        '''Stop the simulation with thorough cleanup'''
+        print("Stopping simulation and cleaning up resources...")
         self.running = False
         
-        # Clean up the network
-        cleanup_network()
+        # Stop the network and dynamics simulation
+        if hasattr(self, 'frrt') and self.frrt:
+            try:
+                print("Stopping FRR routers...")
+                self.frrt.stop_routers()
+            except Exception as e:
+                print(f"Error stopping FRR routers: {str(e)}")
+        
+        if hasattr(self, 'net') and self.net:
+            try:
+                print("Stopping Mininet network...")
+                self.net.stop()
+            except Exception as e:
+                print(f"Error stopping Mininet network: {str(e)}")
+        
+        # Perform thorough cleanup
+        try:
+            enhanced_cleanup()
+        except Exception as e:
+            print(f"Error during cleanup: {str(e)}")
+
+
         
     def add_satellite(self, name, ring_num, node_num, ip=None, mac=None):
         '''
