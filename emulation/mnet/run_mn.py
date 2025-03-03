@@ -47,7 +47,7 @@ def ensure_clean_state():
 def configure_dns(net, graph):
     '''
     Configure DNS for all nodes in the network by updating /etc/hosts
-    in each node's namespace.
+    in each node's namespace. This version handles dynamic node additions.
     '''
     hosts_entries = set()  # Use a set to avoid duplicates
 
@@ -59,19 +59,41 @@ def configure_dns(net, graph):
 
         for neighbor in graph.adj[name]:
             edge = graph.adj[name][neighbor]
-            local_ip = edge["ip"][name]
-            remote_ip = edge["ip"][neighbor]
-            local_intf = edge["intf"][name]
-            remote_intf = edge["intf"][neighbor]
-
-            hosts_entries.add(f"{format(local_ip.ip)}\t{local_intf} {name}-TO-{neighbor}")
-            hosts_entries.add(f"{format(remote_ip.ip)}\t{remote_intf} {neighbor}-TO-{name}")
+            if "ip" in edge and name in edge["ip"] and neighbor in edge["ip"]:
+                local_ip = edge["ip"][name]
+                remote_ip = edge["ip"][neighbor]
+                if "intf" in edge and name in edge["intf"] and neighbor in edge["intf"]:
+                    local_intf = edge["intf"][name]
+                    remote_intf = edge["intf"][neighbor]
+                    hosts_entries.add(f"{format(local_ip.ip)}\t{local_intf} {name}-TO-{neighbor}")
+                    hosts_entries.add(f"{format(remote_ip.ip)}\t{remote_intf} {neighbor}-TO-{name}")
 
     # Ground stations
     for name in torus_topo.ground_stations(graph):
         node = graph.nodes[name]
         if "ip" in node:
             hosts_entries.add(f"{format(node['ip'].ip)}\t{name}")
+            
+    # Vessels
+    for name in torus_topo.vessels(graph):
+        node = graph.nodes[name]
+        if "ip" in node:
+            hosts_entries.add(f"{format(node['ip'].ip)}\t{name}")
+
+    # Uplinks for ground stations and vessels
+    for station_type in [torus_topo.ground_stations, torus_topo.vessels]:
+        for name in station_type(graph):
+            # Check for active uplinks in frr_topo
+            node = net.getNodeByName(name)
+            if node:
+                for uplink_sat in graph.adj.get(name, {}):
+                    if uplink_sat.startswith('R'):  # It's a satellite
+                        edge = graph.adj[name][uplink_sat]
+                        if "ip" in edge and name in edge["ip"] and uplink_sat in edge["ip"]:
+                            station_ip = edge["ip"][name]
+                            sat_ip = edge["ip"][uplink_sat]
+                            hosts_entries.add(f"{format(station_ip.ip)}\t{name}-TO-{uplink_sat} {name}-uplink")
+                            hosts_entries.add(f"{format(sat_ip.ip)}\t{uplink_sat}-TO-{name} {uplink_sat}-downlink")
 
     hosts_content = "\n".join([
         "127.0.0.1\tlocalhost",
@@ -84,6 +106,7 @@ def configure_dns(net, graph):
         *sorted(hosts_entries)
     ])
 
+    # Update all hosts' DNS configuration
     for node in net.hosts:
         temp_file = f'/tmp/hosts_{node.name}.temp'
         with open(temp_file, 'w') as f:

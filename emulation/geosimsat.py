@@ -202,9 +202,84 @@ class SatSimulation:
                 position=position,
                 waypoints=waypoints  # Now passing a list of Waypoint objects
             )
-            self.moving_stations.append(moving_station)   
+            self.moving_stations.append(moving_station)  
+
+    def add_satellite(self, satellite_name, earth_satellite_obj):
+        """
+        Add a new satellite to the simulation on the fly
+        
+        Args:
+            satellite_name: Name of the satellite
+            earth_satellite_obj: EarthSatellite object from skyfield
+        """
+        # Create a new satellite object
+        new_satellite = Satellite(satellite_name, earth_satellite_obj)
+        self.satellites.append(new_satellite)
+        print(f"Added satellite {satellite_name} to dynamics simulation")
+        
+        # Update positions immediately
+        current_time = datetime.datetime.now(tz=datetime.timezone.utc)
+        sfield_time = self.ts.from_datetime(current_time)
+        new_satellite.geo = new_satellite.earth_sat.at(sfield_time)
+        lat, lon = wgs84.latlon_of(new_satellite.geo)
+        new_satellite.lat = lat
+        new_satellite.lon = lon
+        new_satellite.height = wgs84.height_of(new_satellite.geo)
+        
+        return new_satellite
+
+    def add_ground_station(self, name, lat, lon):
+        """
+        Add a new ground station to the simulation on the fly
+        
+        Args:
+            name: Name of the ground station
+            lat: Latitude (float)
+            lon: Longitude (float)
+        """
+        # Create position
+        position = wgs84.latlon(lat, lon)
+        
+        # Create and add the ground station
+        ground_station = GroundStation(name, position)
+        self.ground_stations.append(ground_station)
+        print(f"Added ground station {name} to dynamics simulation")
+        
+        return ground_station
+
+    def add_vessel(self, name, waypoints):
+        """
+        Add a new vessel (moving station) to the simulation on the fly
+        
+        Args:
+            name: Name of the vessel
+            waypoints: List of (lat, lon) tuples defining the vessel's path
+        """
+        # Convert tuple waypoints to Waypoint objects
+        waypoint_objects = [Waypoint(lat=wp[0], lon=wp[1]) for wp in waypoints]
+        
+        # Create position at first waypoint
+        position = wgs84.latlon(waypoints[0][0], waypoints[0][1])
+        
+        # Create and add the vessel
+        moving_station = MovingStation(
+            name=name,
+            position=position,
+            waypoints=waypoint_objects
+        )
+        self.moving_stations.append(moving_station)
+        print(f"Added vessel {name} to dynamics simulation")
+        
+        return moving_station
 
     def updatePositions(self, future_time: datetime.datetime):
+        """
+        Update the positions of all satellites, ground stations, and vessels
+        and send them to the API.
+        
+        This version ensures all dynamic nodes are properly included.
+        """
+        print(f"Updating positions for {future_time}")
         sfield_time = self.ts.from_datetime(future_time)
         positions = []
         ground_positions = []
@@ -212,39 +287,51 @@ class SatSimulation:
 
         # Update satellite positions
         for satellite in self.satellites:
-            satellite.geo = satellite.earth_sat.at(sfield_time)
-            lat, lon = wgs84.latlon_of(satellite.geo)
-            satellite.lat = lat
-            satellite.lon = lon
-            satellite.height = wgs84.height_of(satellite.geo)
-            
-            # Create position update
-            position = simapi.SatellitePosition(
-                name=satellite.name,
-                lat=float(satellite.lat.degrees),
-                lon=float(satellite.lon.degrees),
-                height=float(satellite.height.km)
-            )
-            positions.append(position)
+            try:
+                satellite.geo = satellite.earth_sat.at(sfield_time)
+                lat, lon = wgs84.latlon_of(satellite.geo)
+                satellite.lat = lat
+                satellite.lon = lon
+                satellite.height = wgs84.height_of(satellite.geo)
+                
+                # Create position update
+                position = simapi.SatellitePosition(
+                    name=satellite.name,
+                    lat=float(satellite.lat.degrees),
+                    lon=float(satellite.lon.degrees),
+                    height=float(satellite.height.km)
+                )
+                positions.append(position)
+                print(f"Satellite {satellite.name} updated: lat={satellite.lat.degrees:.2f}, lon={satellite.lon.degrees:.2f}, height={satellite.height.km:.2f}km")
+            except Exception as e:
+                print(f"Error updating satellite {satellite.name}: {str(e)}")
 
         # Add ground station positions
         for station in self.ground_stations:
-            ground_pos = simapi.GroundStationPosition(
-                name=station.name,
-                lat=float(station.position.latitude.degrees),
-                lon=float(station.position.longitude.degrees)
-            )
-            ground_positions.append(ground_pos)
+            try:
+                ground_pos = simapi.GroundStationPosition(
+                    name=station.name,
+                    lat=float(station.position.latitude.degrees),
+                    lon=float(station.position.longitude.degrees)
+                )
+                ground_positions.append(ground_pos)
+                print(f"Ground station {station.name} updated: lat={station.position.latitude.degrees:.2f}, lon={station.position.longitude.degrees:.2f}")
+            except Exception as e:
+                print(f"Error updating ground station {station.name}: {str(e)}")
 
         # Update moving station positions
         for station in self.moving_stations:
-            station.update_position()  # Add this line to update vessel positions
-            vessel_pos = simapi.VesselPosition(
-                name=station.name,
-                lat=float(station.position.latitude.degrees),
-                lon=float(station.position.longitude.degrees)
-            )
-            vessel_positions.append(vessel_pos)
+            try:
+                station.update_position()  # Update vessel position
+                vessel_pos = simapi.VesselPosition(
+                    name=station.name,
+                    lat=float(station.position.latitude.degrees),
+                    lon=float(station.position.longitude.degrees)
+                )
+                vessel_positions.append(vessel_pos)
+                print(f"Vessel {station.name} updated: lat={station.position.latitude.degrees:.2f}, lon={station.position.longitude.degrees:.2f}")
+            except Exception as e:
+                print(f"Error updating vessel {station.name}: {str(e)}")
 
         # Collect satellite-to-satellite links
         satellite_links = []
@@ -281,9 +368,12 @@ class SatSimulation:
             satellite_links=satellite_links,
             ground_uplinks=ground_uplinks
         )
-        self.client.update_positions(data)
-        #print(f"{satellite.name} Lat: {satellite.lat}, Lon: {satellite.lon}, Hieght: {satellite.height.km}km")
-        print(f"{station.name} Lat: {station.position.latitude.degrees}, Lon: {station.position.longitude.degrees}")
+        
+        try:
+            self.client.update_positions(data)
+            print(f"API updated with {len(positions)} satellites, {len(ground_positions)} ground stations, {len(vessel_positions)} vessels")
+        except Exception as e:
+            print(f"Error sending positions to API: {str(e)}")
 
     @staticmethod
     def nearby(ground_station: GroundStation, satellite: Satellite) -> bool:
@@ -373,31 +463,89 @@ class SatSimulation:
             self.client.set_uplinks(station.name, links)
 
     def run(self):
-        current_time = datetime.datetime.now(tz=datetime.timezone.utc)
-        slice_delta = datetime.timedelta(seconds=SatSimulation.TIME_SLICE)
+        '''
+        Main simulation loop that updates satellite positions and uplink statuses.
+        '''
+        try:
+            current_time = datetime.datetime.now(tz=datetime.timezone.utc)
+            slice_delta = datetime.timedelta(seconds=SatSimulation.TIME_SLICE)
 
-        # Generate positions for current time
-        print(f"update positions for {current_time}")
-        self.updatePositions(current_time)
-        self.updateUplinkStatus(current_time)
-        self.updateInterPlaneStatus()
-        self.send_updates()
-
-        while True:
-            # Generate positions for next time step
-            future_time = current_time + slice_delta
-            print(f"update positions for {future_time}")
-            self.updatePositions(future_time)
-            self.updateUplinkStatus(future_time)
-            self.updateInterPlaneStatus()
-            sleep_delta = future_time - datetime.datetime.now(tz=datetime.timezone.utc)
-            print(f"zero uplink % = {self.zero_uplink_count / self.uplink_updates}")
-            print("sleep")
-            if not self.calc_only:
-                # Wait until next time step thenupdate
-                time.sleep(sleep_delta.seconds)
+            # Generate positions for current time
+            print(f"Initializing positions for {current_time}")
+            
+            try:
+                self.updatePositions(current_time)
+            except Exception as e:
+                print(f"Error in initial position update: {str(e)}")
+                
+            try:
+                self.updateUplinkStatus(current_time)
+            except Exception as e:
+                print(f"Error in initial uplink update: {str(e)}")
+                
+            try:
+                self.updateInterPlaneStatus()
+            except Exception as e:
+                print(f"Error in initial interplane status update: {str(e)}")
+                
+            try:
                 self.send_updates()
-            current_time = future_time
+            except Exception as e:
+                print(f"Error in initial send_updates: {str(e)}")
+
+            # Main simulation loop
+            while True:
+                try:
+                    # Generate positions for next time step
+                    future_time = current_time + slice_delta
+                    print(f"\n--- Updating for time: {future_time} ---")
+                    
+                    # Catch exceptions for each update separately to improve robustness
+                    try:
+                        self.updatePositions(future_time)
+                    except Exception as e:
+                        print(f"Error updating positions: {str(e)}")
+                        
+                    try:
+                        self.updateUplinkStatus(future_time)
+                    except Exception as e:
+                        print(f"Error updating uplink status: {str(e)}")
+                        
+                    try:
+                        self.updateInterPlaneStatus()
+                    except Exception as e:
+                        print(f"Error updating interplane status: {str(e)}")
+                    
+                    # Report statistics
+                    try:
+                        print(f"Zero uplink percentage: {self.zero_uplink_count / self.uplink_updates:.2f}")
+                    except:
+                        pass
+                        
+                    # Sleep until next update time
+                    sleep_delta = future_time - datetime.datetime.now(tz=datetime.timezone.utc)
+                    sleep_seconds = max(0, sleep_delta.total_seconds())
+                    if sleep_seconds > 0:
+                        print(f"Sleeping for {sleep_seconds:.2f} seconds")
+                    
+                    if not self.calc_only and sleep_seconds > 0:
+                        # Wait until next time step then update
+                        time.sleep(sleep_seconds)
+                        try:
+                            self.send_updates()
+                        except Exception as e:
+                            print(f"Error sending updates: {str(e)}")
+                    
+                    current_time = future_time
+                    
+                except Exception as e:
+                    print(f"Error in main simulation loop: {str(e)}")
+                    # Continue the loop regardless of errors
+                    time.sleep(5)  # Add small delay in case of errors
+                    
+        except Exception as e:
+            print(f"Fatal error in satellite simulation: {str(e)}")
+
 
 
 def run(num_rings: int, num_routers: int, ground_stations: bool, min_elev: int, calc_only: bool, ground_station_data: dict, vessel_data: dict = None) -> None:
