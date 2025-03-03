@@ -13,6 +13,9 @@ import time
 import ipaddress
 import networkx
 import datetime
+import mininet
+import mininet.link
+
 
 from mininet.net import Mininet
 from mininet.term import makeTerm
@@ -23,6 +26,7 @@ from pydantic import BaseModel
 
 from emulation.mnet import driver
 from emulation.mnet import frr_topo
+from emulation.mnet import pmonitor
 from emulation.mnet.run_mn import (
     ensure_clean_state, configure_dns, setup_packet_capture, 
     cleanup_network, stop_packet_capture, merge_captures
@@ -461,25 +465,12 @@ class SimulationManager:
     def add_satellite(self, name, ring_num, node_num, ip=None, mac=None):
         '''
         Dynamically add a satellite to the running simulation.
-        
-        Args:
-            name: Name of the satellite
-            ring_num: Ring number (orbital plane)
-            node_num: Node number within the ring
-            ip: IP address (optional)
-            mac: MAC address (optional)
         '''
         with self.lock:
             print(f"Adding satellite {name} to ring {ring_num}, position {node_num}")
-            # ... [Existing code remains the same until after creating the satellite] ...
             
-            # [After creating the satellite and configuring Mininet...]
-            
-            # 5. Update satellite simulation with debug output
-            if self.sat_simulation:
-                print(f"Adding satellite {name} to dynamics simulation...")
-                
-                # Get orbital parameters
+            try:
+                # 1. Create orbital parameters and add to NetworkX graph
                 num_rings = self.graph.graph["rings"]
                 num_ring_nodes = self.graph.graph["ring_nodes"]
                 right_ascension = 360 / num_rings * ring_num
@@ -492,22 +483,226 @@ class SimulationManager:
                 if ring_num % 2 == 1:
                     mean_anomaly += 360 / num_ring_nodes / 2
                     
+                # Create orbit data object and assign catalog number
                 orbit = torus_topo.OrbitData(right_ascension, inclination, mean_anomaly, altitude)
                 orbit.assign_cat_num()
                 
-                # Create Earth satellite object
+                # Add node to graph
+                self.graph.add_node(name)
+                node = self.graph.nodes[name]
+                node[torus_topo.TYPE] = torus_topo.TYPE_SAT
+                node["orbit"] = orbit
+                node["altitude"] = altitude
+                node["inf_count"] = 0  # Initialize interface count
+                
+                # Generate node IP if not provided
+                if ip is None:
+                    # Create a unique IP based on existing pattern
+                    count = len(torus_topo.satellites(self.graph))
+                    ip_val = 0x0A010000 + count
+                    node_ip = ipaddress.IPv4Interface((ip_val, 31))
+                    node["ip"] = node_ip
+                    ip_str = format(node_ip)
+                    ip_addr = format(node_ip.ip)
+                else:
+                    # Use provided IP
+                    ip_str = ip
+                    ip_addr = ip.split('/')[0] if '/' in ip else ip
+                    
+                # 2. Generate FRR configurations
+                node["ospf"] = frr_config_topo.create_ospf_config(self.graph, name)
+                node["vtysh"] = frr_config_topo.create_vtysh_config(name)
+                node["daemons"] = frr_config_topo.create_daemons_config()
+                
+                # 3. Create a new Mininet host WITHOUT an IP initially
+                print(f"Creating Mininet node for {name}")
+                satellite_node = self.net.addHost(
+                    name,
+                    cls=frr_topo.RouteNode,
+                    ip=None  # We'll set this after creating the interfaces
+                )
+                
+                # 4. Force namespace creation by running a command
+                satellite_node.cmd('echo "Namespace created"')
+                
+                # 5. Find an existing satellite to connect to
+                # Look for satellites in the same ring first
+                connected = False
+                for other_node_num in range(num_ring_nodes):
+                    if other_node_num != node_num:
+                        other_name = f"R{ring_num}_{other_node_num}"
+                        if other_name in self.graph.nodes:
+                            # Create link between the nodes
+                            print(f"Connecting {name} to {other_name} in the same ring")
+                            
+                            # Create unique interface names
+                            node["inf_count"] += 1
+                            intf1 = f"{name}-eth{node['inf_count']}"
+                            
+                            other_node = self.graph.nodes[other_name]
+                            other_node["inf_count"] += 1
+                            intf2 = f"{other_name}-eth{other_node['inf_count']}"
+                            
+                            # Create link IP addresses
+                            link_count = len(self.graph.edges)
+                            ip_val = 0x0A0F0000 + link_count * 4
+                            link_network = ipaddress.IPv4Network((ip_val, 30))
+                            ips = list(link_network.hosts())
+                            
+                            # Add link to graph with proper structure for original code
+                            self.graph.add_edge(name, other_name)
+                            edge = self.graph.edges[name, other_name]
+                            edge["number"] = link_count
+                            edge["ip"] = link_network  # This is needed for get_link_list
+                            edge["inter_ring"] = False
+                            
+                            # Set up the adjacency structure
+                            # Force these to be dictionaries regardless of what's there before
+                            self.graph.adj[name][other_name]["ip"] = {}
+                            self.graph.adj[other_name][name]["ip"] = {}
+                                
+                            self.graph.adj[name][other_name]["ip"][name] = ipaddress.IPv4Interface((ips[0].packed, 30))
+                            self.graph.adj[other_name][name]["ip"][other_name] = ipaddress.IPv4Interface((ips[1].packed, 30))
+                            
+                            # Set interface names
+                            # Force these to be dictionaries
+                            self.graph.adj[name][other_name]["intf"] = {}
+                            self.graph.adj[other_name][name]["intf"] = {}
+                                
+                            self.graph.adj[name][other_name]["intf"][name] = intf1
+                            self.graph.adj[other_name][name]["intf"][other_name] = intf2
+                            
+                            # Create Mininet link with IP addresses
+                            link = self.net.addLink(
+                                satellite_node,
+                                self.net.getNodeByName(other_name),
+                                intfName1=intf1,
+                                intfName2=intf2,
+                                cls=mininet.link.TCLink,
+                                params1={'ip': f'{ips[0]}/30'},
+                                params2={'ip': f'{ips[1]}/30'}
+                            )
+                            
+                            # Set up the interfaces from the link
+                            link.intf1.config(ip=f'{ips[0]}/30')
+                            link.intf2.config(ip=f'{ips[1]}/30')
+                            
+                            connected = True
+                            break
+                
+                # If not connected to same ring, try another ring
+                if not connected:
+                    for other_ring_num in range(num_rings):
+                        if other_ring_num != ring_num:
+                            other_name = f"R{other_ring_num}_{node_num}"
+                            if other_name in self.graph.nodes:
+                                # Create link between the nodes
+                                print(f"Connecting {name} to {other_name} in another ring")
+                                
+                                # Create unique interface names
+                                node["inf_count"] += 1
+                                intf1 = f"{name}-eth{node['inf_count']}"
+                                
+                                other_node = self.graph.nodes[other_name]
+                                other_node["inf_count"] += 1 
+                                intf2 = f"{other_name}-eth{other_node['inf_count']}"
+                                
+                                # Create link IP addresses
+                                link_count = len(self.graph.edges)
+                                ip_val = 0x0A0F0000 + link_count * 4
+                                link_network = ipaddress.IPv4Network((ip_val, 30))
+                                ips = list(link_network.hosts())
+                                
+                                # Add link to graph with proper structure for original code
+                                self.graph.add_edge(name, other_name)
+                                edge = self.graph.edges[name, other_name]
+                                edge["number"] = link_count
+                                edge["ip"] = link_network  # This is needed for get_link_list
+                                edge["inter_ring"] = True
+                                
+                                # Set up the adjacency structure
+                                # Force these to be dictionaries regardless of what's there before
+                                self.graph.adj[name][other_name]["ip"] = {}
+                                self.graph.adj[other_name][name]["ip"] = {}
+                                    
+                                self.graph.adj[name][other_name]["ip"][name] = ipaddress.IPv4Interface((ips[0].packed, 30))
+                                self.graph.adj[other_name][name]["ip"][other_name] = ipaddress.IPv4Interface((ips[1].packed, 30))
+                                
+                                # Set interface names
+                                # Force these to be dictionaries
+                                self.graph.adj[name][other_name]["intf"] = {}
+                                self.graph.adj[other_name][name]["intf"] = {}
+                                    
+                                self.graph.adj[name][other_name]["intf"][name] = intf1
+                                self.graph.adj[other_name][name]["intf"][other_name] = intf2
+                                
+                                # Create Mininet link with IP addresses
+                                link = self.net.addLink(
+                                    satellite_node,
+                                    self.net.getNodeByName(other_name),
+                                    intfName1=intf1,
+                                    intfName2=intf2,
+                                    cls=mininet.link.TCLink,
+                                    params1={'ip': f'{ips[0]}/30'},
+                                    params2={'ip': f'{ips[1]}/30'}
+                                )
+                                
+                                # Set up the interfaces from the link
+                                link.intf1.config(ip=f'{ips[0]}/30')
+                                link.intf2.config(ip=f'{ips[1]}/30')
+                                
+                                connected = True
+                                break
+                        if connected:
+                            break
+                
+                # 6. Create a loopback interface for the node's primary IP
+                print(f"Setting up loopback interface for {name}")
+                # Add loopback interface with the node's primary IP
+                satellite_node.cmd(f'ip link add name lo0 type dummy')
+                satellite_node.cmd(f'ip link set lo0 up')
+                satellite_node.cmd(f'ip addr add {ip_str} dev lo0')
+                
+                # 7. Create FRR router object and add to FRR runtime
+                frr_router = frr_topo.FrrRouter(name, ip_addr)
+                frr_router.configure(
+                    ospf=node["ospf"],
+                    vtysh=node["vtysh"],
+                    daemons=node["daemons"]
+                )
+                
+                self.frrt.nodes[name] = frr_router
+                self.frrt.routers[name] = frr_router
+                frr_router.node = satellite_node
+                
+                # 8. Initialize FRR
+                print(f"Initializing {name} and starting FRR")
+                frr_router.write_configs()
+                frr_router.sendCmd(f"/usr/lib/frr/frrinit.sh start '{name}'")
+                frr_router.waitOutput()
+                
+                # 9. Setup monitoring
+                print(f"Setting up monitoring for {name}")
+                db_master = pmonitor.open_db(self.frrt.db_file)
+                pmonitor.init_targets(self.frrt.db_file, [(name, frr_router.defaultIP(), True)])
+                frr_router.startMonitor(self.frrt.db_file, db_master)
+                frr_router.waitOutput()
+                db_master.close()
+                
+                # 10. Update DNS
+                from emulation.mnet.run_mn import configure_dns
+                configure_dns(self.net, self.graph)
+                
+                # 11. Update satellite simulation with the new satellite
+                print(f"Adding {name} to dynamics simulation")
                 ts = load.timescale()
                 l1, l2 = orbit.tle_format()
                 print(f"Satellite TLE: {l1} / {l2}")
                 
-                from skyfield.api import EarthSatellite
                 earth_satellite = EarthSatellite(l1, l2, name, ts)
+                new_satellite = self.sat_simulation.add_satellite(name, earth_satellite)
                 
-                # Add to satellite simulation
-                new_satellite = Satellite(name, earth_satellite)
-                self.sat_simulation.satellites.append(new_satellite)
-                
-                # Force immediate position update
+                # Force an immediate position update
                 current_time = datetime.datetime.now(tz=datetime.timezone.utc)
                 sfield_time = self.sat_simulation.ts.from_datetime(current_time)
                 new_satellite.geo = new_satellite.earth_sat.at(sfield_time)
@@ -516,84 +711,392 @@ class SimulationManager:
                 new_satellite.lon = lon
                 new_satellite.height = wgs84.height_of(new_satellite.geo)
                 
-                # Force API update
+                # Force API update to ensure visibility in the UI
                 self._update_api_positions()
                 
-                print(f"Satellite {name} added to dynamics simulation at lat: {lat.degrees}, lon: {lon.degrees}, height: {new_satellite.height.km} km")
-            
-            print(f"Satellite {name} added successfully")
-            return name
+                print(f"Satellite {name} added successfully at lat: {lat.degrees:.2f}, lon: {lon.degrees:.2f}, height: {new_satellite.height.km:.2f} km")
+                return name
+                
+            except Exception as e:
+                print(f"Error adding satellite {name}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return None
     
     def add_ground_station(self, name, lat, lon, ip=None):
         '''
         Dynamically add a ground station to the running simulation.
-        
-        Args:
-            name: Name of the ground station
-            lat: Latitude
-            lon: Longitude
-            ip: IP address (optional)
         '''
         with self.lock:
             print(f"Adding ground station {name} at lat: {lat}, lon: {lon}")
-            # ... [Existing code remains the same until after creating the ground station] ...
             
-            # [After creating the ground station in Mininet...]
-            
-            # 4. Update satellite simulation with debug output
-            if self.sat_simulation:
-                print(f"Adding ground station {name} to dynamics simulation...")
-                position = wgs84.latlon(lat, lon)
-                new_ground_station = GroundStation(name, position)
-                self.sat_simulation.ground_stations.append(new_ground_station)
+            try:
+                # 1. Add to NetworkX graph
+                self.graph.add_node(name)
+                node = self.graph.nodes[name]
+                node[torus_topo.TYPE] = torus_topo.TYPE_GROUND
+                node[torus_topo.LAT] = lat
+                node[torus_topo.LON] = lon
+                node["inf_count"] = 0  # Initialize interface count
                 
-                # Force API update
+                # 2. Generate node IP if not provided
+                if ip is None:
+                    # Create a unique IP for the ground station
+                    count = len(torus_topo.ground_stations(self.graph))
+                    ip_val = 0x0A020000 + count
+                    node_ip = ipaddress.IPv4Interface((ip_val, 31))
+                    node["ip"] = node_ip
+                    ip_str = format(node_ip)
+                    ip_addr = format(node_ip.ip)
+                else:
+                    ip_str = ip
+                    ip_addr = ip.split('/')[0] if '/' in ip else ip
+                
+                # 3. Set up uplink pool for satellite connections
+                uplinks = []
+                count = len(self.graph.edges) + 1
+                for i in range(4):
+                    ip_val = 0x0A0F0000 + count * 4
+                    count += 1
+                    nw_link = ipaddress.IPv4Network((ip_val, 30))
+                    ips = list(nw_link.hosts())
+                    uplink = {"nw": nw_link,
+                            "ip1": ipaddress.IPv4Interface((ips[0].packed, 30)),
+                            "ip2": ipaddress.IPv4Interface((ips[1].packed, 30))}
+                    uplinks.append(uplink)
+                node["uplinks"] = uplinks
+                
+                # 4. Create Mininet node WITHOUT an IP initially
+                print(f"Creating Mininet node for {name}")
+                ground_node = self.net.addHost(
+                    name,
+                    cls=frr_topo.RouteNode,
+                    ip=None  # We'll set this after creating the interfaces
+                )
+                
+                # 5. Force namespace creation by running a command
+                ground_node.cmd('echo "Namespace created"')
+                
+                # 6. Find an existing ground station to connect to
+                connected = False
+                other_stations = list(torus_topo.ground_stations(self.graph))
+                for other_name in other_stations:
+                    if other_name != name:
+                        # Create link between the ground stations
+                        print(f"Connecting {name} to {other_name}")
+                        
+                        # Create unique interface names
+                        node["inf_count"] += 1
+                        intf1 = f"{name}-eth{node['inf_count']}"
+                        
+                        other_node = self.graph.nodes[other_name]
+                        other_node["inf_count"] += 1
+                        intf2 = f"{other_name}-eth{other_node['inf_count']}"
+                        
+                        # Create link IP addresses
+                        link_count = len(self.graph.edges)
+                        ip_val = 0x0A0F0000 + link_count * 4
+                        link_network = ipaddress.IPv4Network((ip_val, 30))
+                        ips = list(link_network.hosts())
+                        
+                        # Add link to graph with proper structure
+                        self.graph.add_edge(name, other_name)
+                        edge = self.graph.edges[name, other_name]
+                        edge["number"] = link_count
+                        edge["ip"] = link_network  # This is needed for get_link_list
+                        
+                        # Set up the adjacency structure
+                        # Force these to be dictionaries regardless of what's there before
+                        self.graph.adj[name][other_name]["ip"] = {}
+                        self.graph.adj[other_name][name]["ip"] = {}
+                            
+                        self.graph.adj[name][other_name]["ip"][name] = ipaddress.IPv4Interface((ips[0].packed, 30))
+                        self.graph.adj[other_name][name]["ip"][other_name] = ipaddress.IPv4Interface((ips[1].packed, 30))
+                        
+                        # Set interface names
+                        # Force these to be dictionaries
+                        self.graph.adj[name][other_name]["intf"] = {}
+                        self.graph.adj[other_name][name]["intf"] = {}
+                            
+                        self.graph.adj[name][other_name]["intf"][name] = intf1
+                        self.graph.adj[other_name][name]["intf"][other_name] = intf2
+                        
+                        # Create Mininet link with IP addresses
+                        link = self.net.addLink(
+                            ground_node,
+                            self.net.getNodeByName(other_name),
+                            intfName1=intf1,
+                            intfName2=intf2,
+                            cls=mininet.link.TCLink,
+                            params1={'ip': f'{ips[0]}/30'},
+                            params2={'ip': f'{ips[1]}/30'}
+                        )
+                        
+                        # Set up the interfaces from the link
+                        link.intf1.config(ip=f'{ips[0]}/30')
+                        link.intf2.config(ip=f'{ips[1]}/30')
+                        
+                        connected = True
+                        break
+                
+                # 7. Create a loopback interface for the node's primary IP
+                print(f"Setting up loopback interface for {name}")
+                ground_node.cmd(f'ip link add name lo0 type dummy')
+                ground_node.cmd(f'ip link set lo0 up')
+                ground_node.cmd(f'ip addr add {ip_str} dev lo0')
+                
+                # 8. Create GroundStation object and add to FRR runtime
+                ground_station = frr_topo.GroundStation(name, ip_addr, node["uplinks"])
+                self.frrt.nodes[name] = ground_station
+                self.frrt.ground_stations[name] = ground_station
+                ground_station.node = ground_node
+                
+                # 9. Setup monitoring
+                print(f"Setting up monitoring for {name}")
+                db_master = pmonitor.open_db(self.frrt.db_file)
+                pmonitor.init_targets(self.frrt.db_file, [(name, ground_station.defaultIP(), False)])
+                ground_station.startMonitor(self.frrt.db_file, db_master)
+                ground_station.waitOutput()
+                db_master.close()
+                
+                # 10. Update DNS
+                from emulation.mnet.run_mn import configure_dns
+                configure_dns(self.net, self.graph)
+                
+                # 11. Add to satellite simulation
+                print(f"Adding {name} to dynamics simulation")
+                position = wgs84.latlon(lat, lon)
+                new_ground_station = self.sat_simulation.add_ground_station(name, lat, lon)
+                
+                # Force API update to ensure visibility in the UI
                 self._update_api_positions()
                 
-                print(f"Ground station {name} added to dynamics simulation at lat: {lat}, lon: {lon}")
+                print(f"Ground station {name} added successfully at lat: {lat}, lon: {lon}")
+                return name
                 
-            print(f"Ground station {name} added successfully")
-            return name
+            except Exception as e:
+                print(f"Error adding ground station {name}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return None
             
     def add_vessel(self, name, waypoints, ip=None):
         '''
         Dynamically add a vessel to the running simulation.
-        
-        Args:
-            name: Name of the vessel
-            waypoints: List of (lat, lon) tuples defining the vessel's path
-            ip: IP address (optional)
         '''
         with self.lock:
             print(f"Adding vessel {name} with {len(waypoints)} waypoints")
-            # ... [Existing code remains the same until after creating the vessel] ...
             
-            # [After creating the vessel in Mininet...]
-            
-            # 4. Update satellite simulation with debug output
-            if self.sat_simulation:
-                print(f"Adding vessel {name} to dynamics simulation...")
-                # Convert tuple waypoints to Waypoint objects
-                waypoint_objects = [Waypoint(lat=wp[0], lon=wp[1]) for wp in waypoints]
+            try:
+                # 1. Add to NetworkX graph
+                self.graph.add_node(name)
+                node = self.graph.nodes[name]
+                node[torus_topo.TYPE] = torus_topo.TYPE_VESSEL
+                node[torus_topo.LAT] = waypoints[0][0]  # Initial position is first waypoint
+                node[torus_topo.LON] = waypoints[0][1]
+                node["waypoints"] = waypoints
+                node["inf_count"] = 0  # Initialize interface count
                 
-                # Create position at first waypoint
-                position = wgs84.latlon(waypoints[0][0], waypoints[0][1])
+                # 2. Generate node IP if not provided
+                if ip is None:
+                    # Create a unique IP for the vessel
+                    count = len(torus_topo.vessels(self.graph))
+                    ip_val = 0x0A030000 + count
+                    node_ip = ipaddress.IPv4Interface((ip_val, 31))
+                    node["ip"] = node_ip
+                    ip_str = format(node_ip)
+                    ip_addr = format(node_ip.ip)
+                else:
+                    ip_str = ip
+                    ip_addr = ip.split('/')[0] if '/' in ip else ip
                 
-                # Create the vessel
-                moving_station = MovingStation(
-                    name=name,
-                    position=position,
-                    waypoints=waypoint_objects
+                # 3. Set up uplink pool for satellite connections
+                uplinks = []
+                count = len(self.graph.edges) + 1
+                for i in range(4):
+                    ip_val = 0x0A0F0000 + count * 4
+                    count += 1
+                    nw_link = ipaddress.IPv4Network((ip_val, 30))
+                    ips = list(nw_link.hosts())
+                    uplink = {"nw": nw_link,
+                            "ip1": ipaddress.IPv4Interface((ips[0].packed, 30)),
+                            "ip2": ipaddress.IPv4Interface((ips[1].packed, 30))}
+                    uplinks.append(uplink)
+                node["uplinks"] = uplinks
+                
+                # 4. Create Mininet node WITHOUT an IP initially
+                print(f"Creating Mininet node for {name}")
+                vessel_node = self.net.addHost(
+                    name,
+                    cls=frr_topo.RouteNode,
+                    ip=None  # We'll set this after creating the interfaces
                 )
-                self.sat_simulation.moving_stations.append(moving_station)
                 
-                # Force API update
+                # 5. Force namespace creation by running a command
+                vessel_node.cmd('echo "Namespace created"')
+                
+                # 6. Find an existing vessel or ground station to connect to
+                connected = False
+                # First try to connect to another vessel
+                other_vessels = list(torus_topo.vessels(self.graph))
+                for other_name in other_vessels:
+                    if other_name != name:
+                        # Create link between the vessels
+                        print(f"Connecting {name} to vessel {other_name}")
+                        
+                        # Create unique interface names
+                        node["inf_count"] += 1
+                        intf1 = f"{name}-eth{node['inf_count']}"
+                        
+                        other_node = self.graph.nodes[other_name]
+                        other_node["inf_count"] += 1
+                        intf2 = f"{other_name}-eth{other_node['inf_count']}"
+                        
+                        # Create link IP addresses
+                        link_count = len(self.graph.edges)
+                        ip_val = 0x0A0F0000 + link_count * 4
+                        link_network = ipaddress.IPv4Network((ip_val, 30))
+                        ips = list(link_network.hosts())
+                        
+                        # Add link to graph with proper structure
+                        self.graph.add_edge(name, other_name)
+                        edge = self.graph.edges[name, other_name]
+                        edge["number"] = link_count
+                        edge["ip"] = link_network  # This is needed for get_link_list
+                        
+                        # Set up the adjacency structure
+                        # Force these to be dictionaries regardless of what's there before
+                        self.graph.adj[name][other_name]["ip"] = {}
+                        self.graph.adj[other_name][name]["ip"] = {}
+                            
+                        self.graph.adj[name][other_name]["ip"][name] = ipaddress.IPv4Interface((ips[0].packed, 30))
+                        self.graph.adj[other_name][name]["ip"][other_name] = ipaddress.IPv4Interface((ips[1].packed, 30))
+                        
+                        # Set interface names
+                        # Force these to be dictionaries
+                        self.graph.adj[name][other_name]["intf"] = {}
+                        self.graph.adj[other_name][name]["intf"] = {}
+                            
+                        self.graph.adj[name][other_name]["intf"][name] = intf1
+                        self.graph.adj[other_name][name]["intf"][other_name] = intf2
+                        
+                        # Create Mininet link with IP addresses
+                        link = self.net.addLink(
+                            vessel_node,
+                            self.net.getNodeByName(other_name),
+                            intfName1=intf1,
+                            intfName2=intf2,
+                            cls=mininet.link.TCLink,
+                            params1={'ip': f'{ips[0]}/30'},
+                            params2={'ip': f'{ips[1]}/30'}
+                        )
+                        
+                        # Set up the interfaces from the link
+                        link.intf1.config(ip=f'{ips[0]}/30')
+                        link.intf2.config(ip=f'{ips[1]}/30')
+                        
+                        connected = True
+                        break
+                
+                # If not connected to another vessel, try a ground station
+                if not connected:
+                    ground_stations = list(torus_topo.ground_stations(self.graph))
+                    if ground_stations:
+                        other_name = ground_stations[0]
+                        print(f"Connecting {name} to ground station {other_name}")
+                        
+                        # Create unique interface names
+                        node["inf_count"] += 1
+                        intf1 = f"{name}-eth{node['inf_count']}"
+                        
+                        other_node = self.graph.nodes[other_name]
+                        other_node["inf_count"] += 1
+                        intf2 = f"{other_name}-eth{other_node['inf_count']}"
+                        
+                        # Create link IP addresses
+                        link_count = len(self.graph.edges)
+                        ip_val = 0x0A0F0000 + link_count * 4
+                        link_network = ipaddress.IPv4Network((ip_val, 30))
+                        ips = list(link_network.hosts())
+                        
+                        # Add link to graph with proper structure
+                        self.graph.add_edge(name, other_name)
+                        edge = self.graph.edges[name, other_name]
+                        edge["number"] = link_count
+                        edge["ip"] = link_network  # This is needed for get_link_list
+                        
+                        # Set up the adjacency structure
+                        # Force these to be dictionaries regardless of what's there before
+                        self.graph.adj[name][other_name]["ip"] = {}
+                        self.graph.adj[other_name][name]["ip"] = {}
+                            
+                        self.graph.adj[name][other_name]["ip"][name] = ipaddress.IPv4Interface((ips[0].packed, 30))
+                        self.graph.adj[other_name][name]["ip"][other_name] = ipaddress.IPv4Interface((ips[1].packed, 30))
+                        
+                        # Set interface names
+                        # Force these to be dictionaries
+                        self.graph.adj[name][other_name]["intf"] = {}
+                        self.graph.adj[other_name][name]["intf"] = {}
+                            
+                        self.graph.adj[name][other_name]["intf"][name] = intf1
+                        self.graph.adj[other_name][name]["intf"][other_name] = intf2
+                        
+                        # Create Mininet link with IP addresses
+                        link = self.net.addLink(
+                            vessel_node,
+                            self.net.getNodeByName(other_name),
+                            intfName1=intf1,
+                            intfName2=intf2,
+                            cls=mininet.link.TCLink,
+                            params1={'ip': f'{ips[0]}/30'},
+                            params2={'ip': f'{ips[1]}/30'}
+                        )
+                        
+                        # Set up the interfaces from the link
+                        link.intf1.config(ip=f'{ips[0]}/30')
+                        link.intf2.config(ip=f'{ips[1]}/30')
+                        
+                        connected = True
+                
+                # 7. Create a loopback interface for the node's primary IP
+                print(f"Setting up loopback interface for {name}")
+                vessel_node.cmd(f'ip link add name lo0 type dummy')
+                vessel_node.cmd(f'ip link set lo0 up')
+                vessel_node.cmd(f'ip addr add {ip_str} dev lo0')
+                
+                # 8. Create Vessel object and add to FRR runtime
+                vessel = frr_topo.Vessel(name, ip_addr, node["uplinks"])
+                self.frrt.nodes[name] = vessel
+                self.frrt.vessels[name] = vessel
+                vessel.node = vessel_node
+                
+                # 9. Setup monitoring
+                print(f"Setting up monitoring for {name}")
+                db_master = pmonitor.open_db(self.frrt.db_file)
+                pmonitor.init_targets(self.frrt.db_file, [(name, vessel.defaultIP(), False)])
+                vessel.startMonitor(self.frrt.db_file, db_master)
+                vessel.waitOutput()
+                db_master.close()
+                
+                # 10. Update DNS
+                from emulation.mnet.run_mn import configure_dns
+                configure_dns(self.net, self.graph)
+                
+                # 11. Add to satellite simulation
+                print(f"Adding {name} to dynamics simulation")
+                self.sat_simulation.add_vessel(name, waypoints)
+                
+                # Force API update to ensure visibility in the UI
                 self._update_api_positions()
                 
-                print(f"Vessel {name} added to dynamics simulation at initial position lat: {waypoints[0][0]}, lon: {waypoints[0][1]}")
-                    
-            print(f"Vessel {name} added successfully")
-            return name
+                print(f"Vessel {name} added successfully with initial position lat: {waypoints[0][0]}, lon: {waypoints[0][1]}")
+                return name
+                
+            except Exception as e:
+                print(f"Error adding vessel {name}: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return None
 
     # New helper method to force position updates to the API
     def _update_api_positions(self):
